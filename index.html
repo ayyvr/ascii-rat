@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASCII Rat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+<h1>A S C I I &nbsp; R A T</h1>
+<div id="stage"><pre id="screen"></pre></div>
+<div id="readout">H 000.0&deg; &nbsp; V +00.0&deg;</div>
+<div class="controls">
+  <button id="partyBtn" class="cbtn" type="button">* PARTY MODE</button>
+  <button id="logBtn" class="cbtn" type="button">[ RAT-SLOP LOG ]</button>
+  <button id="setBtn" class="cbtn" type="button">+ SETTINGS</button>
+</div>
+<p class="hint">drag to spin &middot; scroll to zoom &middot; P party &middot; L log &middot; S settings &middot; W wallpaper &middot; M maze &middot; space pause</p>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+<div id="fps">FPS --</div>
+<div id="cursorGlow"></div>
+<div id="cursorFx"></div>
+
+<div id="overlay" class="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="The Rat-Slop Log">
+    <div class="mhead">
+      <div class="mtitle">THE RAT-SLOP LOG</div>
+      <button id="mclose" class="mclose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div id="verBar">
+      <div class="verSeg">
+        <button class="vchev" id="majUp" type="button" aria-label="Later major release"><canvas id="majUpCv" width="11" height="7"></canvas></button>
+        <canvas id="majCv" width="11" height="15"></canvas>
+        <button class="vchev" id="majDn" type="button" aria-label="Earlier major release"><canvas id="majDnCv" width="11" height="7"></canvas></button>
+      </div>
+      <canvas class="vdot" id="dot1" width="11" height="15"></canvas>
+      <div class="verSeg">
+        <button class="vchev" id="minUp" type="button" aria-label="Later minor release"><canvas id="minUpCv" width="11" height="7"></canvas></button>
+        <canvas id="minCv" width="11" height="15"></canvas>
+        <button class="vchev" id="minDn" type="button" aria-label="Earlier minor release"><canvas id="minDnCv" width="11" height="7"></canvas></button>
+      </div>
+      <canvas class="vdot" id="dot2" width="11" height="15"></canvas>
+      <div class="verSeg">
+        <button class="vchev" id="patUp" type="button" aria-label="Later patch release"><canvas id="patUpCv" width="11" height="7"></canvas></button>
+        <canvas id="patCv" width="11" height="15"></canvas>
+        <button class="vchev" id="patDn" type="button" aria-label="Earlier patch release"><canvas id="patDnCv" width="11" height="7"></canvas></button>
+      </div>
+    </div>
+    <div id="mbody" class="mbody"></div>
+    <div class="mfoot">sewer-verified releases &middot; rat-slop infrastructure</div>
+    <div id="logResize" class="resizeHandle" title="drag to resize"></div>
+  </div>
+</div>
+
+<div id="setOverlay" class="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="mhead">
+      <div class="mtitle">S E T T I N G S</div>
+      <button id="setClose" class="mclose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="optrow" id="setTabs"></div>
+    <div class="mbody">
+      <div id="setPanels"></div>
+    </div>
+    <div class="mfoot">press W anytime for pure wallpaper mode</div>
+    <div id="resizeHandle" class="resizeHandle" title="drag to resize"></div>
+  </div>
+</div>
+
+<div id="gameOverlay" class="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Rat Maze">
+    <div class="mhead">
+      <div class="mtitle">R A T &nbsp; M A Z E</div>
+      <button id="gameClose" class="mclose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <pre id="gameScreen"></pre>
+    <div class="mfoot" id="gameFoot"></div>
+  </div>
+</div>
+
+<div id="createOverlay" class="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Create your rat">
+    <div class="mhead">
+      <div class="mtitle">CREATE YOUR RAT</div>
+    </div>
+    <div id="previewWrap"><canvas id="ratPreview" width="132" height="52"></canvas></div>
+    <div class="mbody">
+      <div class="shead">FIRST TIME SETUP &mdash; SCULPT YOUR RAT &mdash; PREVIEW STAYS PINNED WHILE YOU SCROLL THE OPTIONS</div>
+      <div id="createSliders"></div>
+      <div class="shead">PALETTE</div>
+      <div class="optrow" id="createPal"></div>
+      <div id="createPalName" class="palname"></div>
+    </div>
+    <div class="mfoot">
+      <button id="createGo" class="tab active" type="button">[ RELEASE THE RAT ]</button>
+    </div>
+  </div>
+</div>
+
+    <script src="js/state.js"></script>
+    <script src="js/rat.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/log.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
