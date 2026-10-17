@@ -298,3 +298,254 @@ function renderRatSliders(container) {
   });
 }
 function updateSculpt() {
+  const sculpting = setOverlay.classList.contains("show") && curTab === "RAT";
+  document.getElementById("stage").style.visibility = sculpting ? "hidden" : "";
+  if (sculpting) drawRatPreview();
+}
+
+// ---------- settings: category tabs + panels ----------
+const SET_TABS = ["RAT", "ANIMATION", "STYLE", "PREFERENCES", "PERFORMANCE"];
+let curTab = "RAT";
+
+function sectionHead(text) { return el("div", "shead", text); }
+function renderSetTabs() {
+  setTabsEl.innerHTML = "";
+  setTabsEl.style.display = "flex";
+  SET_TABS.forEach((name) => {
+    const b = el("button", "tab" + (curTab === name ? " active" : ""), "[ " + name + " ]");
+    b.type = "button";
+    b.addEventListener("click", () => {
+      curTab = name;
+      renderSettings();
+      updateSculpt();
+    });
+    setTabsEl.appendChild(b);
+  });
+}
+function shareRow() {
+  const row = el("div", "srow");
+  const code = ratCode();
+  const link = location.origin + location.pathname + "?rat=" + code;
+  const top = el("div", "srowtop");
+  top.append(el("span", "slabel", "SHARE YOUR RAT"));
+  const btn = el("button", "tab", "[ COPY RAT LINK ]");
+  btn.type = "button";
+  btn.addEventListener("click", () => {
+    try {
+      navigator.clipboard.writeText(link);
+      btn.textContent = "[ LINK COPIED ]";
+    } catch (e) {
+      btn.textContent = "[ " + code + " ]";
+    }
+    setTimeout(() => { btn.textContent = "[ COPY RAT LINK ]"; }, 1400);
+  });
+  top.append(btn);
+  row.append(top, el("div", "palname", code));
+  return row;
+}
+function renderSettings() {
+  renderSetTabs();
+  setPanelsEl.innerHTML = "";
+  const panel = el("div");
+  if (curTab === "RAT") {
+    const cv = document.createElement("canvas");
+    cv.id = "ratPreview2";
+    cv.width = 132; cv.height = 52;
+    panel.append(cv, sectionHead("SCULPT YOUR RAT"));
+    const sliders = el("div");
+    panel.append(sliders);
+    renderRatSliders(sliders);
+    panel.append(sectionHead("SHARE YOUR RAT"));
+    panel.append(shareRow());
+  } else if (curTab === "ANIMATION") {
+    panel.append(sectionHead("IDLE MOTION"));
+    const cm = el("div", "optrow"), dm = el("div", "palname");
+    panel.append(cm, dm);
+    renderMotions(cm, dm);
+    panel.append(sectionHead("ENTRANCE"));
+    const ce = el("div", "optrow"), de = el("div", "palname");
+    panel.append(ce, de);
+    renderOptions(ce, ENTRANCES, () => state.entrance,
+      (n) => { state.entrance = n; saveState(); }, de, ENTRANCE_DESC);
+    panel.append(sectionHead("SPIN"));
+    panel.append(sliderRow("SPIN SPEED", 0, 2, 0.05, () => state.spin,
+      (v) => { state.spin = v; saveState(); }, (v) => Number(v).toFixed(2)));
+    panel.append(toggleRow("MOMENTUM ON RELEASE", () => state.momentum,
+      (v) => { state.momentum = v; saveState(); }));
+    panel.append(sliderRow("GLIDE WINDOW", 0.2, 3, 0.1, () => state.glide,
+      (v) => { state.glide = v; saveState(); }, (v) => Number(v).toFixed(1) + "s"));
+  } else if (curTab === "STYLE") {
+    panel.append(sectionHead("CHARACTER RAMP"));
+    const cr = el("div", "optrow");
+    panel.append(cr);
+    renderRamps(cr);
+    panel.append(sectionHead("PALETTE"));
+    const cp = el("div", "optrow"), np = el("div", "palname");
+    panel.append(cp, np);
+    renderPalettes(cp, np);
+    panel.append(sectionHead("BACKGROUND"));
+    const cb = el("div", "optrow");
+    panel.append(cb);
+    renderOptions(cb, BGS, () => state.bg,
+      (n) => { state.bg = n; applyBg(); saveState(); }, null, null);
+    if (isOctober) {
+      panel.append(sectionHead("SEASONAL"));
+      panel.append(toggleRow("HALLOWEEN MODE", () => state.halloween,
+        (v) => { state.halloween = v; applyHalloween(); saveState(); renderSettings(); }));
+    }
+  } else if (curTab === "PREFERENCES") {
+    panel.append(sectionHead("CURSOR"));
+    const cc = el("div", "optrow");
+    panel.append(cc);
+    renderOptions(cc, CURSORS, () => state.cursor,
+      (n) => { state.cursor = n; applyCursorMode(); saveState(); }, null, null);
+    panel.append(sectionHead("ZOOM"));
+    panel.append(toggleRow("SMOOTH ZOOM", () => state.smoothZoom,
+      (v) => { state.smoothZoom = v; if (!v) zoom = zoomTarget; saveState(); }));
+    panel.append(sliderRow("ZOOM SPEED", 0.25, 3, 0.05, () => state.zoomSpeed,
+      (v) => { state.zoomSpeed = v; saveState(); }, (v) => Number(v).toFixed(2) + "x"));
+  } else {
+    panel.append(sectionHead("POINT DENSITY"));
+    panel.append(sliderRow("DENSITY", 0.3, 2, 0.05, () => state.density,
+      (v) => { state.density = v; buildRat(state.rat); drawRatPreview(); saveState(); },
+      (v) => Number(v).toFixed(2) + "x"));
+    panel.append(sectionHead("OVERLAYS"));
+    panel.append(toggleRow("PHOSPHOR FX", () => state.fx,
+      (v) => { state.fx = v; applyFx(); saveState(); }));
+    panel.append(toggleRow("FPS COUNTER", () => state.fps,
+      (v) => { state.fps = v; if (!v) fpsEl.textContent = "FPS --"; saveState(); }));
+  }
+  setPanelsEl.append(panel);
+  if (curTab === "RAT") drawRatPreview();
+}
+function applyFx() {
+  const on = state.fx;
+  document.querySelector(".scanlines").style.display = on ? "" : "none";
+  document.querySelector(".vignette").style.display = on ? "" : "none";
+}
+function openSettings() {
+  setOverlay.classList.add("show");
+  setOverlay.setAttribute("aria-hidden", "false");
+  const m = setOverlay.querySelector(".modal");
+  if (!m.style.height) m.style.height = Math.round(Math.min(innerHeight * 0.8, 560)) + "px";
+  renderSettings();
+  updateSculpt();
+}
+function closeSettings() {
+  setOverlay.classList.remove("show");
+  setOverlay.setAttribute("aria-hidden", "true");
+  updateSculpt();
+}
+function toggleSettings() {
+  if (setOverlay.classList.contains("show")) closeSettings();
+  else openSettings();
+}
+document.getElementById("setBtn").addEventListener("click", toggleSettings);
+document.getElementById("setClose").addEventListener("click", closeSettings);
+setOverlay.addEventListener("click", (e) => {
+  if (e.target === setOverlay) closeSettings();
+});
+
+// ---------- wallpaper mode (press W): every scrap of UI fades away ----------
+let zen = false;
+function toggleZen() {
+  zen = !zen;
+  ["h1", "readout", "fps"].forEach((id) => {
+    const e2 = document.getElementById(id);
+    if (e2) e2.style.display = zen ? "none" : "";
+  });
+  document.querySelector(".controls").style.display = zen ? "none" : "";
+  document.querySelector(".hint").style.display = zen ? "none" : "";
+}
+
+// ---------- cursor tracking (glow + pixel trails chase the pointer) ----------
+addEventListener("pointermove", (e) => { cgtx = e.clientX; cgty = e.clientY; });
+
+// ---------- draggable + resizable modals ----------
+function makeDraggable(modal) {
+  const head = modal.querySelector(".mhead");
+  if (!head) return;
+  let dragging = false, sx = 0, sy = 0, cx = 0, cy = 0;
+  head.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".mclose")) return;
+    dragging = true;
+    const r = modal.getBoundingClientRect();
+    cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+    modal.style.left = cx + "px";
+    modal.style.top = cy + "px";
+    modal.style.transform = "translate(-50%, -50%)";
+    sx = e.clientX; sy = e.clientY;
+    head.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  head.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    modal.style.left = cx + (e.clientX - sx) + "px";
+    modal.style.top = cy + (e.clientY - sy) + "px";
+  });
+  const end = () => { dragging = false; };
+  head.addEventListener("pointerup", end);
+  head.addEventListener("pointercancel", end);
+}
+function makeResizable(handle, modal) {
+  let on = false, sx = 0, sy = 0, sw = 0, sh = 0;
+  handle.addEventListener("pointerdown", (e) => {
+    on = true;
+    sx = e.clientX; sy = e.clientY;
+    const r = modal.getBoundingClientRect();
+    sw = r.width; sh = r.height;
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  handle.addEventListener("pointermove", (e) => {
+    if (!on) return;
+    modal.style.width = Math.max(320, sw + (e.clientX - sx)) + "px";
+    modal.style.height = Math.max(220, sh + (e.clientY - sy)) + "px";
+  });
+  const end = () => { on = false; };
+  handle.addEventListener("pointerup", end);
+  handle.addEventListener("pointercancel", end);
+}
+makeDraggable(document.querySelector("#overlay .modal"));
+makeDraggable(document.querySelector("#setOverlay .modal"));
+makeResizable(document.getElementById("logResize"), document.querySelector("#overlay .modal"));
+makeResizable(document.getElementById("resizeHandle"), document.querySelector("#setOverlay .modal"));
+
+// ---------- v5: pixel ripple on press + shimmer on hover ----------
+function pixelBurst(x, y, n, spread, dist) {
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement("div");
+    const a = Math.random() * Math.PI * 2;
+    const r = 2 + Math.random() * spread;
+    d.style.cssText =
+      "position:fixed;pointer-events:none;z-index:99;width:3px;height:3px;" +
+      "background:var(--fg-bright);left:" + (x + Math.cos(a) * r).toFixed(1) + "px;" +
+      "top:" + (y + Math.sin(a) * r).toFixed(1) + "px;" +
+      "transition:transform .4s ease-out,opacity .4s ease-out;opacity:0.9;";
+    document.body.appendChild(d);
+    requestAnimationFrame(() => {
+      d.style.transform = "translate(" + (Math.cos(a) * dist).toFixed(1) + "px," + (Math.sin(a) * dist).toFixed(1) + "px) scale(0.4)";
+      d.style.opacity = "0";
+    });
+    setTimeout(() => d.remove(), 450);
+  }
+}
+document.addEventListener("pointerdown", (e) => {
+  if (e.target.closest("button")) pixelBurst(e.clientX, e.clientY, 6, 10, 24);
+}, true);
+document.addEventListener("pointerover", (e) => {
+  const b = e.target.closest("button");
+  if (b && !b.dataset.shx) {
+    b.dataset.shx = "1";
+    const r = b.getBoundingClientRect();
+    pixelBurst(r.left + r.width / 2, r.top + r.height / 2, 2, 8, 12);
+    setTimeout(() => { delete b.dataset.shx; }, 400);
+  }
+}, true);
+
+// ---------- boot: apply the persisted look ----------
+applyHalloween();
+applyBg();
+applyCursorMode();
+applyFx();
+drawChevrons();

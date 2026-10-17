@@ -298,3 +298,20 @@ function openLog() {
   const m = overlay.querySelector(".modal");
   if (!m.style.height) m.style.height = Math.round(Math.min(innerHeight * 0.8, 560)) + "px";
   drawVerSegs(0, verAnim);
+  updateVerSegs();
+  renderBody();
+  drawChevrons();
+}
+function closeLog() {
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden", "true");
+}
+function toggleLog() {
+  if (overlay.classList.contains("show")) closeLog();
+  else openLog();
+}
+document.getElementById("mclose").addEventListener("click", closeLog);
+document.getElementById("logBtn").addEventListener("click", toggleLog);
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) closeLog();
+});
