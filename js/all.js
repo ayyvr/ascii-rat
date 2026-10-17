@@ -96,7 +96,7 @@ function applyRatCode(code) {
   if (code && applyRatCode(code)) saveState();
 })();
 
-"use strict";
+
 
 // ---------- character ramps (light -> dense); preset-pickable in Settings ----------
 const RAMPS = {
@@ -238,7 +238,7 @@ function buildRat(p) {
 }
 buildRat(state.rat);
 
-"use strict";
+
 
 // ---------- render setup ----------
 const COLS = 120, ROWS = 34;
@@ -353,7 +353,7 @@ function toggleParty() {
 }
 partyBtn.addEventListener("click", toggleParty);
 
-"use strict";
+
 
 // ---------- the Rat-Slop Log ----------
 const overlay = document.getElementById("overlay");
@@ -653,7 +653,7 @@ function openLog() {
   const m = overlay.querySelector(".modal");
   if (!m.style.height) m.style.height = Math.round(Math.min(innerHeight * 0.8, 560)) + "px";
   drawVerSegs(0, verAnim);
-"use strict";
+
 
 // ---------- settings: categories, sliders, toggles ----------
 const setOverlay = document.getElementById("setOverlay");
@@ -953,7 +953,7 @@ function renderRatSliders(container) {
   });
 }
 function updateSculpt() {
-"use strict";
+
 
 // ---------- v5: rat maze easter egg (title click or press M) ----------
 const gameOverlay = document.getElementById("gameOverlay");
@@ -1049,7 +1049,7 @@ gameOverlay.addEventListener("click", (e) => {
 });
 document.querySelector("h1").addEventListener("click", toggleGame);
 makeDraggable(document.querySelector("#gameOverlay .modal"));
-"use strict";
+
 
 // ---------- first visit: rat character creation before anything else ----------
 const createOverlay = document.getElementById("createOverlay");
