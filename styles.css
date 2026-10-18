@@ -636,3 +636,35 @@ body.setup h1,
 body.setup #readout,
 body.setup .controls,
 body.setup .hint { visibility: hidden; }
+
+/* Mobile Modal Behavior (F07) */
+@media (max-width: 767px) {
+  .overlay.show .modal {
+    width: 95vw;
+    max-height: 90vh;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* Don't close modals on outside tap for mobile */
+  .overlay {
+    pointer-events: auto;
+  }
+  
+  .overlay.show {
+    opacity: 1;
+  }
+}
+
+/* Mobile-specific modal styling */
+.modal.mobile-full {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  top: 0;
+  left: 0;
+  transform: none;
+  border: none;
+  border-radius: 0;
+}

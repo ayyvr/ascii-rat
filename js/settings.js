@@ -571,7 +571,11 @@ function toggleSettings() {
 document.getElementById("setBtn").addEventListener("click", toggleSettings);
 document.getElementById("setClose").addEventListener("click", closeSettings);
 setOverlay.addEventListener("click", (e) => {
-  if (e.target === setOverlay) closeSettings();
+  if (e.target === setOverlay) {
+    // Don't close on mobile (F07)
+    const isMobile = 'ontouchstart' in window || window.innerWidth < 768;
+    if (!isMobile) closeSettings();
+  }
 });
 
 // ---------- wallpaper mode (press W): every scrap of UI fades away ----------
