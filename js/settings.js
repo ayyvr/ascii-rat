@@ -132,13 +132,6 @@ const BG_CLASSES = {
   "FALL LEAVES": "bg-fall",
 };
 
-// Leaf System constants
-const LEAF_ANIMATION_DESC = {
-  NONE: "Static leaves - no animation",
-  GENTLE: "Very subtle side-to-side movement",
-  SWAY: "Gentle swaying motion",
-  DRIFT: "Slow drifting with gentle sway",
-};
 const SEASONS = ["NONE", "SPRING", "SUMMER", "FALL", "WINTER"];
 const SEASON_DESC = {
   NONE: "Use automatic season detection",
