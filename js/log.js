@@ -124,6 +124,14 @@ const CHANGELOG = [
       { s: "minor", text: "Button presses now burst a ripple of pixel squares, and hovering sprinkles shimmering pixels - the single-shade wave block is retired" },
     ],
   },
+  {
+    tag: "v5.0.1",
+    name: "SEWER REPAIR",
+    entries: [
+      { s: "major", text: "HOTFIX: Restore code lost at the parting joins" },
+      { s: "major", text: "HOTFIX: Remove corrupted js/all.js (reverted to loading 7 parted files directly)" },
+    ],
+  },
 ];
 
 const SEV = {
