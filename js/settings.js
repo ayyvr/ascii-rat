@@ -441,6 +441,11 @@ function renderSettings() {
     panel.append(cb);
     renderOptions(cb, BGS, () => state.bg,
       (n) => { state.bg = n; applyBg(); saveState(); }, null, null);
+    panel.append(sectionHead("ENTRANCE"));
+    const ce = el("div", "optrow"), de = el("div", "palname");
+    panel.append(ce, de);
+    renderOptions(ce, ENTRANCES, () => state.entrance,
+      (n) => { state.entrance = n; saveState(); entranceT = performance.now(); }, de, ENTRANCE_DESC);
     if (isOctober) {
       panel.append(sectionHead("SEASONAL"));
       panel.append(toggleRow("HALLOWEEN MODE", () => state.halloween,
