@@ -63,6 +63,7 @@ pre:active {
   letter-spacing: 0.25em;
   color: var(--fg-dim);
   opacity: 0.85;
+  text-align: center;
 }
 .scanlines {
   position: fixed;
