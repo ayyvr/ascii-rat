@@ -409,8 +409,13 @@ input[type="range"]::-moz-range-thumb {
   margin: 0.2em 0 0.6em;
 }
 #setPreviewWrap {
+  position: sticky;
+  top: 0;
+  background: var(--deep);
+  z-index: 10;
   padding: 0.4em 1.2em 0.6em;
   text-align: center;
+  border-bottom: 1px solid var(--border);
 }
 #setPreviewWrap canvas {
   display: inline-block;
@@ -435,9 +440,13 @@ input[type="range"]::-moz-range-thumb {
 }
 .previewCtrl:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
 #previewWrap {
-  position: relative;
+  position: sticky;
+  top: 0;
+  background: var(--deep);
+  z-index: 10;
   padding: 0.4em 1.2em 0.6em;
   text-align: center;
+  border-bottom: 1px solid var(--border);
 }
 #previewWrap canvas {
   display: inline-block;
