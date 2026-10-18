@@ -133,7 +133,6 @@ const BG_CLASSES = {
 };
 
 // Leaf System constants
-const LEAF_ANIMATIONS = ["NONE", "GENTLE", "SWAY", "DRIFT"];
 const LEAF_ANIMATION_DESC = {
   NONE: "Static leaves - no animation",
   GENTLE: "Very subtle side-to-side movement",
@@ -177,7 +176,7 @@ function drawPreviewTo(cv) {
   const depth = new Float32Array(W * H).fill(-1e9);
   const shade = new Float32Array(W * H);
   const theta = state.previewRot || previewRot;
-  const scale = state.previewZoom || 1;
+  let scale = state.previewZoom || 1;
   const cy2 = Math.cos(theta), sy2 = Math.sin(theta);
   const cp2 = Math.cos(0.14), sp2 = Math.sin(0.14);
   scale = (W * 0.98 * scale) / 9;
@@ -682,8 +681,6 @@ applyCursorMode();
 applyFx();
 drawChevrons();
 
-// Initialize leaf system
-initLeaves();
 
 // Schedule initial tab overflow check
 scheduleTabOverflowCheck();

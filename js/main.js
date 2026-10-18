@@ -28,6 +28,9 @@ function initMain() {
   }
 }
 
+// Initialize leaf system (leaves.js has loaded by now)
+initLeaves();
+
 // Run after all scripts are loaded
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initMain);
