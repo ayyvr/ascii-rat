@@ -317,14 +317,18 @@ body.bg-fall {
 }
 body.halloween {
   background-image:
-    radial-gradient(circle at 78% 14%, #f4e7c8 20px, rgba(210, 180, 255, 0.3) 30px, transparent 56px),
+    radial-gradient(circle at 80% 10%, #f4e7c8 24px, rgba(210, 180, 255, 0.3) 32px, transparent 60px),
     radial-gradient(circle, rgba(148, 90, 220, 0.7) 1px, transparent 1.6px),
     radial-gradient(circle, rgba(255, 120, 40, 0.55) 0.8px, transparent 1.3px),
     radial-gradient(ellipse at 50% 40%, var(--bg0) 0%, var(--bg1) 60%, #020303 100%);
-  background-size: 53px 53px, 97px 97px, 100% 100%;
-  animation: bgHalloween 13s linear infinite;
+  background-size: 100% 100%;
+  animation: bgHalloweenMoon 120s linear infinite;
 }
-@keyframes bgHalloween { to { background-position: 53px 477px, -97px 873px, 0 0; } }
+@keyframes bgHalloweenMoon {
+  0% { background-position: 90% 5%, 0 0, 0 0, 0 0; }
+  50% { background-position: 85% 8%, 0 0, 0 0, 0 0; }
+  100% { background-position: 90% 5%, 0 0, 0 0, 0 0; }
+}
 
 /* ---------- settings panel ---------- */
 .optrow {
