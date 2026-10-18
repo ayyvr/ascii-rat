@@ -328,7 +328,7 @@ function updateSculpt() {
 }
 
 // ---------- settings: category tabs + panels ----------
-const SET_TABS = ["RAT", "ANIMATION", "STYLE", "PREFERENCES", "PERFORMANCE"];
+const SET_TABS = ["RAT", "ANIMATION", "STYLE", "PREFERENCES", "PERFORMANCE", "SHARE"];
 let curTab = "RAT";
 
 function sectionHead(text) { return el("div", "shead", text); }
@@ -462,6 +462,16 @@ function renderSettings() {
       (v) => { state.smoothZoom = v; if (!v) zoom = zoomTarget; saveState(); }));
     panel.append(sliderRow("ZOOM SPEED", 0.25, 3, 0.05, () => state.zoomSpeed,
       (v) => { state.zoomSpeed = v; saveState(); }, (v) => Number(v).toFixed(2) + "x"));
+  } else if (curTab === "SHARE") {
+    panel.append(sectionHead("SHARE YOUR RAT"));
+    const code = ratCode();
+    const link = location.origin + location.pathname + "?rat=" + code;
+    panel.append(shareRow());
+    panel.append(sectionHead("DIAGNOSTICS"));
+    const diag = el("div", "srow");
+    diag.append(el("span", "slabel", "Version: v" + (state.setupDone ? "6.0.0" : "5.x.x")));
+    diag.append(el("span", "sval", " | LocalStorage: " + (store.get(SAVE_KEY) ? "active" : "empty")));
+    panel.append(diag);
   } else {
     panel.append(sectionHead("POINT DENSITY"));
     panel.append(sliderRow("DENSITY", 0.3, 2, 0.05, () => state.density,
