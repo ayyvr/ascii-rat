@@ -137,6 +137,7 @@ function applyBg() {
 }
 
 // ---------- builder preview: pixel-dot rat silhouette (no spin) ----------
+let previewRot = 0;
 function drawRatPreview() {
   drawPreviewTo(document.getElementById("ratPreview"));
   drawPreviewTo(document.getElementById("ratPreview2"));
@@ -150,7 +151,8 @@ function drawPreviewTo(cv) {
   const cols = [pal.dim, pal.mid, pal.fg, pal.bright];
   const depth = new Float32Array(W * H).fill(-1e9);
   const shade = new Float32Array(W * H);
-  const cy2 = Math.cos(0.55), sy2 = Math.sin(0.55);
+  const theta = state.previewRot || previewRot;
+  const cy2 = Math.cos(theta), sy2 = Math.sin(theta);
   const cp2 = Math.cos(0.14), sp2 = Math.sin(0.14);
   const scale = (W * 0.98) / 9;
   for (let i = 0; i < pts.length; i++) {
