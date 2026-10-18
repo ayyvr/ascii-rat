@@ -321,7 +321,36 @@ function renderSetTabs() {
     });
     setTabsEl.appendChild(b);
   });
+  // Add overflow dropdown
+  const dropdown = el("button", "tab tabDropdown");
+  dropdown.innerHTML = "[ \u25bc ]";
+  dropdown.type = "button";
+  dropdown.style.display = "none";
+  dropdown.id = "tabDropdownBtn";
+  setTabsEl.appendChild(dropdown);
 }
+function checkTabOverflow() {
+  const container = setTabsEl;
+  if (!container) return;
+  const tabs = container.querySelectorAll(".tab:not(.tabDropdown)");
+  const dropdown = container.querySelector(".tabDropdown");
+  if (!dropdown) return;
+  
+  let totalWidth = 0;
+  tabs.forEach(tab => { totalWidth += tab.offsetWidth; });
+  
+  const availableWidth = container.offsetWidth;
+  const needsDropdown = totalWidth > availableWidth;
+  dropdown.style.display = needsDropdown ? "block" : "none";
+}
+
+// Check overflow on resize and initial render
+let tabOverflowCheck = null;
+function scheduleTabOverflowCheck() {
+  if (tabOverflowCheck) clearTimeout(tabOverflowCheck);
+  tabOverflowCheck = setTimeout(checkTabOverflow, 50);
+}
+window.addEventListener("resize", scheduleTabOverflowCheck);
 function shareRow() {
   const row = el("div", "srow");
   const code = ratCode();
@@ -549,3 +578,6 @@ applyBg();
 applyCursorMode();
 applyFx();
 drawChevrons();
+
+// Schedule initial tab overflow check
+scheduleTabOverflowCheck();

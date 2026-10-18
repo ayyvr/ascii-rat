@@ -236,6 +236,12 @@ pre:active {
 .tabContainer .optrow {
   margin: 0;
   padding: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.tabDropdown {
+  flex-shrink: 0;
+  min-width: 40px;
 }
 /* press-jump replaced by the pixel ripple + hover shimmer (see .ppx/.shx) */
 .mbody {
