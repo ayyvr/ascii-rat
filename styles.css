@@ -44,6 +44,7 @@ h1 {
 #stage {
   position: relative;
   line-height: 0;
+  z-index: 1;
 }
 pre {
   font-family: inherit;
