@@ -455,7 +455,7 @@ function renderSettings() {
     panel.append(toggleRow("PHOSPHOR FX", () => state.fx,
       (v) => { state.fx = v; applyFx(); saveState(); }));
     panel.append(toggleRow("FPS COUNTER", () => state.fps,
-      (v) => { state.fps = v; if (!v) fpsEl.textContent = "FPS --"; saveState(); }));
+      (v) => { state.fps = v; fpsEl.classList.toggle("on", v); if (!v) fpsEl.textContent = "FPS --"; saveState(); }));
   }
   setPanelsEl.append(panel);
   if (curTab === "RAT") drawRatPreview();

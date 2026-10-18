@@ -425,6 +425,10 @@ input[type="range"]::-moz-range-thumb {
   letter-spacing: 0.2em;
   color: var(--fg-dim);
   z-index: 5;
+  display: none;
+}
+#fps.on {
+  display: block;
 }
 #cursorGlow {
   position: fixed;
