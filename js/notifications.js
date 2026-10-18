@@ -173,8 +173,114 @@ function dismissAllNotifications() {
 
 // Show notification (public API)
 function showNotification(message, type = "info", duration = 3000, dismissible = true) {
+  recordNotification(message, type); // history (F05)
   notificationQueue.push({ message, type, duration, dismissible });
   processNotificationQueue();
+}
+
+// ---------- notification history panel (F05) ----------
+const NOTIFICATION_HISTORY_KEY = "asciiRat.notifications.history";
+const NOTIFICATION_HISTORY_MAX = 50;
+let notificationHistory = [];
+
+function loadNotificationHistory() {
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_HISTORY_KEY);
+    if (raw) notificationHistory = JSON.parse(raw) || [];
+  } catch (e) { notificationHistory = []; }
+}
+function recordNotification(message, type) {
+  notificationHistory.unshift({ t: Date.now(), m: message, y: type || "info" });
+  if (notificationHistory.length > NOTIFICATION_HISTORY_MAX) notificationHistory.length = NOTIFICATION_HISTORY_MAX;
+  try { localStorage.setItem(NOTIFICATION_HISTORY_KEY, JSON.stringify(notificationHistory)); } catch (e) {}
+}
+function createHistoryButton() {
+  const btn = document.createElement("button");
+  btn.id = "notifHistoryBtn";
+  btn.type = "button";
+  btn.title = "Notification history";
+  btn.textContent = "[ N ]";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 14px;
+    right: 20px;
+    z-index: 1001;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    background: var(--panel);
+    color: var(--fg-dim);
+    border: 1px solid var(--border);
+    padding: 0.2em 0.45em;
+    cursor: pointer;
+  `;
+  btn.addEventListener("click", toggleNotificationHistory);
+  document.body.appendChild(btn);
+  return btn;
+}
+function toggleNotificationHistory() {
+  const existing = document.getElementById("notifHistoryPanel");
+  if (existing) { existing.remove(); return; }
+  const panel = document.createElement("div");
+  panel.id = "notifHistoryPanel";
+  panel.style.cssText = `
+    position: fixed;
+    bottom: 48px;
+    right: 20px;
+    z-index: 1001;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
+    padding: 0.6em 0.8em;
+    width: min(340px, 92vw);
+    max-height: 50vh;
+    overflow-y: auto;
+    font-size: 11px;
+  `;
+  const head = document.createElement("div");
+  head.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:1em;letter-spacing:0.15em;color:var(--fg-dim);margin-bottom:0.4em;";
+  const title = document.createElement("span");
+  title.textContent = "NOTIFICATION HISTORY";
+  const clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.textContent = "[ CLEAR ]";
+  clearBtn.style.cssText = "font-family:inherit;font-size:10px;letter-spacing:0.1em;background:var(--panel);color:var(--fg-mid);border:1px solid var(--border);padding:0.15em 0.4em;cursor:pointer;";
+  clearBtn.addEventListener("click", () => {
+    notificationHistory = [];
+    try { localStorage.removeItem(NOTIFICATION_HISTORY_KEY); } catch (e) {}
+    panel.remove();
+  });
+  head.append(title, clearBtn);
+  panel.appendChild(head);
+  if (notificationHistory.length === 0) {
+    const empty = document.createElement("div");
+    empty.textContent = "no notifications yet";
+    empty.style.color = "var(--fg-dim)";
+    panel.appendChild(empty);
+  } else {
+    notificationHistory.forEach((h) => {
+      const line = document.createElement("div");
+      const when = new Date(h.t);
+      const hh = String(when.getHours()).padStart(2, "0");
+      const mm = String(when.getMinutes()).padStart(2, "0");
+      const styles = NOTIFICATION_TYPES[h.y] || NOTIFICATION_TYPES.info;
+      line.style.cssText = "margin:0.25em 0;color:" + styles.text + ";";
+      line.textContent = "[" + hh + ":" + mm + "] " + h.m.replace(/\n/g, " ");
+      panel.appendChild(line);
+    });
+  }
+  document.body.appendChild(panel);
+  // close on any click outside the panel and button
+  setTimeout(() => {
+    document.addEventListener("pointerdown", function closer(e) {
+      const p = document.getElementById("notifHistoryPanel");
+      const b = document.getElementById("notifHistoryBtn");
+      if (p && !p.contains(e.target) && e.target !== b) {
+        p.remove();
+        document.removeEventListener("pointerdown", closer);
+      }
+    });
+  }, 0);
 }
 
 // Process notification queue
@@ -193,11 +299,16 @@ function processNotificationQueue() {
 function initNotifications() {
   // Create container
   getNotificationContainer();
-  
+
+  // Load persisted history + add its toggle button
+  loadNotificationHistory();
+  createHistoryButton();
+
   // Add to window for global access
   window.showNotification = showNotification;
   window.dismissNotification = dismissNotification;
   window.dismissAllNotifications = dismissAllNotifications;
+  window.toggleNotificationHistory = toggleNotificationHistory;
 }
 
 // Mobile-friendly positioning

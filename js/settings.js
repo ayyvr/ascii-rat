@@ -406,6 +406,36 @@ const SET_TABS = ["RAT", "ANIMATION", "STYLE", "PREFERENCES", "PERFORMANCE", "SH
 let curTab = "RAT";
 
 function sectionHead(text) { return el("div", "shead", text); }
+// Leaf type picker: a dropdown with the species grouped by pack
+function leafSpeciesRow() {
+  const row = el("div", "srow");
+  const sel = document.createElement("select");
+  sel.className = "asciiSelect";
+  sel.title = "Leaf species (grouped by pack)";
+  const auto = document.createElement("option");
+  auto.value = "";
+  auto.textContent = "AUTO (season packs)";
+  sel.appendChild(auto);
+  Object.keys(LEAF_PACKS).forEach((packName) => {
+    const group = document.createElement("optgroup");
+    group.label = packName;
+    LEAF_PACKS[packName].forEach((def) => {
+      const opt = document.createElement("option");
+      opt.value = def.id;
+      opt.textContent = def.name;
+      group.appendChild(opt);
+    });
+    sel.appendChild(group);
+  });
+  sel.value = state.leafSpecies || "";
+  sel.addEventListener("change", () => {
+    state.leafSpecies = sel.value || null;
+    applyLeafSettings();
+    saveState();
+  });
+  row.append(sel);
+  return row;
+}
 function renderSetTabs() {
   setTabsEl.innerHTML = "";
   setTabsEl.style.display = "flex";
@@ -566,6 +596,8 @@ function renderSettings() {
     panel.append(sectionHead("FALLING LEAVES"));
     panel.append(toggleRow("ENABLE FALLING LEAVES", () => state.leafEnabled,
       (v) => { state.leafEnabled = v; applyLeafSettings(); saveState(); }));
+    panel.append(sectionHead("LEAF TYPE"));
+    panel.append(leafSpeciesRow());
     panel.append(sectionHead("LEAF ANIMATION"));
     const la = el("div", "optrow"), lda = el("div", "palname");
     panel.append(la, lda);

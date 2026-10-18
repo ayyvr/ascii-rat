@@ -64,6 +64,18 @@ function getSeasonLeaves() {
   return leaves;
 }
 
+// Active leaves: an explicitly picked species (any pack) wins,
+// otherwise all species from the season's packs
+function getActiveLeaves() {
+  if (state.leafSpecies) {
+    for (const packName of Object.keys(LEAF_PACKS)) {
+      const picked = LEAF_PACKS[packName].find((l) => l.id === state.leafSpecies);
+      if (picked) return [picked];
+    }
+  }
+  return getSeasonLeaves();
+}
+
 
 
 // Generate CSS for leaf animation
@@ -149,7 +161,7 @@ function createFallingLeaves() {
   document.body.appendChild(container);
 
   const season = state.leafSeasonOverride || getCurrentSeason();
-  const leaves = getSeasonLeaves();
+  const leaves = getActiveLeaves();
   const leafCount = state.leafCount || 15;
 
   for (let i = 0; i < leafCount; i++) {
@@ -194,6 +206,7 @@ function initLeaves() {
     state.leafEnabled = true;
     state.leafAnimation = "GENTLE";
     state.leafSeasonOverride = null;
+    state.leafSpecies = null;
     state.leafSize = 16;
     state.leafSpeed = 8;
     state.leafCount = 15;

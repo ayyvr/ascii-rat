@@ -508,6 +508,20 @@ body.halloween {
   margin-bottom: 0.3em;
 }
 .slabel { letter-spacing: 0.14em; color: var(--fg-mid); }
+/* ASCII-styled dropdown (leaf type picker) */
+.asciiSelect {
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  background: var(--panel);
+  color: var(--fg-mid);
+  border: 1px solid var(--border);
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+  max-width: 100%;
+}
+.asciiSelect:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
+.asciiSelect:focus { outline: 1px solid var(--fg-dim); }
 .sval { color: var(--fg-bright); }
 input[type="range"] {
   width: 100%;
