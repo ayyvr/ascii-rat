@@ -11,6 +11,12 @@ document.getElementById("createGo").addEventListener("click", () => {
   // main rat reveals now, with its entrance animation
   if (state.entrance !== "NONE") entranceT = performance.now();
 });
+document.getElementById("createReset").addEventListener("click", () => {
+  state.rat = JSON.parse(JSON.stringify(DEFAULTS.rat));
+  buildRat(state.rat);
+  drawRatPreview();
+  renderRatSliders(document.getElementById("createSliders"));
+});
 if (!state.setupDone) {
   document.body.classList.add("setup");
   createOverlay.classList.add("show");
