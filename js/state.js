@@ -29,6 +29,12 @@ const DEFAULTS = {
   previewRot: 0,
   previewZoom: 1,
   previewAutoSpin: false,
+  leafEnabled: true,
+  leafAnimation: "GENTLE",
+  leafSeasonOverride: null,
+  leafSize: 16,
+  leafSpeed: 8,
+  leafCount: 15,
 };
 let state = JSON.parse(JSON.stringify(DEFAULTS));
 (function loadState() {

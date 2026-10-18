@@ -131,6 +131,23 @@ const BG_CLASSES = {
   "PIXEL RAIN": "bg-rain",
   "FALL LEAVES": "bg-fall",
 };
+
+// Leaf System constants
+const LEAF_ANIMATIONS = ["NONE", "GENTLE", "SWAY", "DRIFT"];
+const LEAF_ANIMATION_DESC = {
+  NONE: "Static leaves - no animation",
+  GENTLE: "Very subtle side-to-side movement",
+  SWAY: "Gentle swaying motion",
+  DRIFT: "Slow drifting with gentle sway",
+};
+const SEASONS = ["NONE", "SPRING", "SUMMER", "FALL", "WINTER"];
+const SEASON_DESC = {
+  NONE: "Use automatic season detection",
+  SPRING: "Spring - Woodland + Evergreen packs",
+  SUMMER: "Summer - Woodland + Evergreen packs",
+  FALL: "Fall - Autumn + Evergreen packs",
+  WINTER: "Winter - Evergreen pack only",
+};
 function applyBg() {
   Object.values(BG_CLASSES).forEach((c) => document.body.classList.remove(c));
   if (BG_CLASSES[state.bg]) document.body.classList.add(BG_CLASSES[state.bg]);
@@ -467,6 +484,28 @@ function renderSettings() {
     panel.append(ce, de);
     renderOptions(ce, ENTRANCES, () => state.entrance,
       (n) => { state.entrance = n; saveState(); entranceT = performance.now(); }, de, ENTRANCE_DESC);
+    
+    // Leaf Settings
+    panel.append(sectionHead("FALLING LEAVES"));
+    panel.append(toggleRow("ENABLE FALLING LEAVES", () => state.leafEnabled,
+      (v) => { state.leafEnabled = v; applyLeafSettings(); saveState(); }));
+    panel.append(sectionHead("LEAF ANIMATION"));
+    const la = el("div", "optrow"), lda = el("div", "palname");
+    panel.append(la, lda);
+    renderOptions(la, LEAF_ANIMATIONS, () => state.leafAnimation,
+      (n) => { state.leafAnimation = n; applyLeafSettings(); saveState(); }, lda, LEAF_ANIMATION_DESC);
+    panel.append(sliderRow("LEAF SIZE", 8, 32, 1, () => state.leafSize,
+      (v) => { state.leafSize = v; applyLeafSettings(); saveState(); }, (v) => v + "px"));
+    panel.append(sliderRow("ANIMATION SPEED", 2, 20, 1, () => state.leafSpeed,
+      (v) => { state.leafSpeed = v; applyLeafSettings(); saveState(); }, (v) => v + "s"));
+    panel.append(sliderRow("LEAF COUNT", 5, 50, 1, () => state.leafCount,
+      (v) => { state.leafCount = v; applyLeafSettings(); saveState(); }, (v) => v));
+    panel.append(sectionHead("SEASON OVERRIDE"));
+    const ls = el("div", "optrow"), lsd = el("div", "palname");
+    panel.append(ls, lsd);
+    renderOptions(ls, SEASONS, () => state.leafSeasonOverride || "NONE",
+      (n) => { state.leafSeasonOverride = n === "NONE" ? null : n; applyLeafSettings(); saveState(); }, lsd, SEASON_DESC);
+    
     if (isOctober) {
       panel.append(sectionHead("SEASONAL"));
       panel.append(toggleRow("HALLOWEEN MODE", () => state.halloween,
@@ -638,6 +677,9 @@ applyBg();
 applyCursorMode();
 applyFx();
 drawChevrons();
+
+// Initialize leaf system
+initLeaves();
 
 // Schedule initial tab overflow check
 scheduleTabOverflowCheck();
