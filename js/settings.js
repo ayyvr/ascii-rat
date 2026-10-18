@@ -296,6 +296,19 @@ function renderRatSliders(container) {
       (v) => { state.rat[d.k] = v; buildRat(state.rat); drawRatPreview(); saveState(); },
       fmt));
   });
+  // Add reset rat button
+  const resetRow = el("div", "srow");
+  const resetBtn = el("button", "tab", "[ RESET RAT ]");
+  resetBtn.type = "button";
+  resetBtn.addEventListener("click", () => {
+    state.rat = JSON.parse(JSON.stringify(DEFAULTS.rat));
+    buildRat(state.rat);
+    drawRatPreview();
+    saveState();
+    renderRatSliders(container);
+  });
+  resetRow.append(resetBtn);
+  container.appendChild(resetRow);
 }
 function updateSculpt() {
   const sculpting = setOverlay.classList.contains("show") && curTab === "RAT";
