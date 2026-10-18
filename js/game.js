@@ -62,7 +62,25 @@ function renderMaze() {
 }
 function mazeMove(dx, dy) {
   const nx = mazeRat.x + dx, ny = mazeRat.y + dy;
-  if (mazeGrid[ny][nx] === "#") return;
+  if (mazeGrid[ny][nx] === "#") {
+    // Collision effect - pixel scatter
+    const r = gameScreen.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    for (let i = 0; i < 8; i++) {
+      const d = document.createElement("div");
+      const a = Math.random() * Math.PI * 2;
+      const dist = 10 + Math.random() * 20;
+      d.style.cssText = "position:fixed;pointer-events:none;z-index:99;width:2px;height:2px;background:#ff4444;left:" + (cx + Math.cos(a) * dist).toFixed(1) + "px;top:" + (cy + Math.sin(a) * dist).toFixed(1) + "px;transition:transform .2s ease-out,opacity .2s ease-out;opacity:1;";
+      document.body.appendChild(d);
+      requestAnimationFrame(() => {
+        d.style.transform = "translate(" + (Math.cos(a) * 40).toFixed(1) + "px," + (Math.sin(a) * 40).toFixed(1) + "px) scale(0.3)";
+        d.style.opacity = "0";
+      });
+      setTimeout(() => d.remove(), 250);
+    }
+    return;
+  }
   mazeCrumbs.add(mazeRat.x + "," + mazeRat.y);
   mazeRat = { x: nx, y: ny };
   mazeMoves++;
