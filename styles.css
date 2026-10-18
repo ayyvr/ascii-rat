@@ -259,6 +259,24 @@ pre:active {
   flex-shrink: 0;
   min-width: 40px;
 }
+.tabDropdownMenu {
+  position: fixed;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  z-index: 100;
+  min-width: 120px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
+}
+.tabDropdownMenu .tab {
+  display: block;
+  width: 100%;
+  border-radius: 0;
+  border-bottom: 2px solid var(--border);
+  margin-right: 0;
+}
+.tabDropdownMenu .tab:last-child {
+  border-bottom: none;
+}
 /* press-jump replaced by the pixel ripple + hover shimmer (see .ppx/.shx) */
 .mbody {
   overflow-y: auto;

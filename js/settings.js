@@ -351,6 +351,27 @@ function renderSetTabs() {
   dropdown.type = "button";
   dropdown.style.display = "none";
   dropdown.id = "tabDropdownBtn";
+  dropdown.addEventListener("click", () => {
+    // Show dropdown menu with overflowing tabs
+    const rect = dropdown.getBoundingClientRect();
+    const menu = el("div", "tabDropdownMenu");
+    menu.style.cssText = "position:fixed;left:" + rect.left + "px;top:" + (rect.bottom) + "px;background:var(--panel);border:2px solid var(--border);z-index:100;min-width:120px;";
+    SET_TABS.forEach((name) => {
+      const item = el("button", "tab", "[ " + name + " ]");
+      item.type = "button";
+      item.addEventListener("click", () => {
+        curTab = name;
+        renderSettings();
+        updateSculpt();
+        menu.remove();
+      });
+      menu.appendChild(item);
+    });
+    document.body.appendChild(menu);
+    const closeMenu = () => menu.remove();
+    setTimeout(closeMenu, 3000);
+    menu.addEventListener("click", (e) => e.stopPropagation());
+  });
   setTabsEl.appendChild(dropdown);
 }
 function checkTabOverflow() {
