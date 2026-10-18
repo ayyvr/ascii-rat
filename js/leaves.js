@@ -141,6 +141,11 @@ function generateLeafAnimationCSS() {
       overflow: hidden;
       z-index: -1;
     }
+    .falling-leaf svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
   `;
 
   style.textContent = keyframes + leafStyles;
@@ -182,12 +187,18 @@ function createFallingLeaves() {
     leaf.style.animationDelay = `${delay}s`;
     leaf.style.animationDuration = `${duration}s`;
     
-    // Random leaf color based on season
+    // Species sprite: each species has a dot-matrix SVG; fall back to the
+    // classic colored blob if the sprite is missing
     const packIdx = Math.floor(Math.random() * leaves.length);
     const leafDef = leaves[packIdx];
-    const colorIdx = Math.floor(Math.random() * leafDef.colors.length);
-    leaf.style.backgroundColor = leafDef.colors[colorIdx];
-    leaf.style.borderRadius = "50% 0 50% 50%";
+    const sprite = getSprite("leaf-" + leafDef.id.replace("-", "-pack-"));
+    if (sprite) {
+      leaf.innerHTML = sprite;
+    } else {
+      const colorIdx = Math.floor(Math.random() * leafDef.colors.length);
+      leaf.style.backgroundColor = leafDef.colors[colorIdx];
+      leaf.style.borderRadius = "50% 0 50% 50%";
+    }
     
     container.appendChild(leaf);
   }

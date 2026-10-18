@@ -27,9 +27,9 @@ const MOBILE_THRESHOLD = 0.3; // Minimum joystick displacement to register movem
 
 // Cheese types
 const CHEESE_TYPES = {
-  "WEDGE CLASSIC": { name: "Wedge Classic", color: "#FFC53D", char: "%" },
-  "BLOCK CHUNK": { name: "Block Chunk", color: "#FFD700", char: "&" },
-  "SWISS SLICE": { name: "Swiss Slice", color: "#FFE4B5", char: "$" },
+  "WEDGE CLASSIC": { name: "Wedge Classic", color: "#FFC53D", char: "%", sprite: "maze-wedge-classic" },
+  "BLOCK CHUNK": { name: "Block Chunk", color: "#FFD700", char: "&", sprite: "maze-block-chunk" },
+  "SWISS SLICE": { name: "Swiss Slice", color: "#FFE4B5", char: "$", sprite: "maze-swiss-slice" },
 };
 
 // Rat types (using existing rat definitions)
@@ -38,6 +38,28 @@ const RAT_TYPES = {
   "SHADOW": { name: "Shadow", palette: "MONO" },
   "GHOST": { name: "Ghost", palette: "ICE" },
 };
+
+// ---------- SVG sprite drawing on the maze canvas ----------
+const spriteImgCache = {};
+function spriteImg(id) {
+  if (!spriteImgCache[id]) {
+    const svg = getSprite(id);
+    if (!svg) return null;
+    const img = new Image();
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    spriteImgCache[id] = img;
+  }
+  return spriteImgCache[id];
+}
+// Draw a sprite centered in a tile; false while the image is still loading
+function drawSpriteTile(ctx, id, px, py, tileSize, fill) {
+  const img = spriteImg(id);
+  if (!img || !img.complete || !img.naturalWidth) return false;
+  const s = Math.floor(tileSize * fill);
+  const off = Math.floor((tileSize - s) / 2);
+  ctx.drawImage(img, px + off, py + off, s, s);
+  return true;
+}
 
 // Leaderboard data (stored in localStorage)
 const LEADERBOARD_KEY = "asciiRat.maze.leaderboard";
@@ -202,8 +224,9 @@ function createMazeCanvas(w, h) {
         ctx.fill();
       }
       
-      // Draw rat
+      // Draw rat (sprite; falls back to the classic circle while loading)
       if (mazeRat && mazeRat.x === x && mazeRat.y === y) {
+        if (!drawSpriteTile(ctx, "maze-classic-gray", x * tileSize, y * tileSize, tileSize, 0.9)) {
         ctx.fillStyle = "#FFC53D";
         ctx.beginPath();
         ctx.arc(
@@ -236,11 +259,14 @@ function createMazeCanvas(w, h) {
           Math.PI * 2
         );
         ctx.fill();
+        }
       }
       
-      // Draw cheese
+      // Draw cheese (sprite per cheese type; falls back to the classic circle)
       if (mazeCheese && mazeCheese.x === x && mazeCheese.y === y) {
-        ctx.fillStyle = CHEESE_TYPES[state.mazeCheeseType || "WEDGE CLASSIC"].color;
+        const cheeseType = CHEESE_TYPES[state.mazeCheeseType || "WEDGE CLASSIC"];
+        if (!drawSpriteTile(ctx, cheeseType.sprite, x * tileSize, y * tileSize, tileSize, 0.85)) {
+        ctx.fillStyle = cheeseType.color;
         ctx.beginPath();
         ctx.arc(
           x * tileSize + tileSize / 2,
@@ -272,6 +298,7 @@ function createMazeCanvas(w, h) {
             Math.PI * 2
           );
           ctx.fill();
+        }
         }
       }
     }
