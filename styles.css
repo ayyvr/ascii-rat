@@ -199,10 +199,11 @@ pre:active {
   padding: 1px 2px;
   line-height: 0;
   cursor: pointer;
-  opacity: 0.55;
+  opacity: 0.85;
+  font-size: 14px;
 }
 .vchev:hover { opacity: 1; }
-.vchev:disabled { opacity: 0.12; cursor: default; }
+.vchev:disabled { opacity: 0.35; cursor: default; }
 .vchev canvas { width: 15px; display: block; image-rendering: pixelated; }
 .vdot { width: 10px; image-rendering: pixelated; }
 .tab {
