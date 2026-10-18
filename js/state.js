@@ -1,7 +1,7 @@
 "use strict";
 
 // ---------- persisted state (remembered between loads) ----------
-const SAVE_KEY = "asciiRat.v4";
+const SAVE_KEY = "asciiRat.v6";
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
