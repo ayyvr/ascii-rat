@@ -51,7 +51,7 @@ const RAT_DEFS = [
   { k: "eyeSize", label: "EYE SIZE", min: 0.5, max: 2 },
   { k: "legLen", label: "LEG LENGTH", min: 0.5, max: 1.6 },
   { k: "tailLen", label: "TAIL LENGTH", min: 0.4, max: 1.8 },
-  { k: "tailCurl", label: "TAIL CURL", min: 0.2, max: 2 },
+  { k: "tailCurl", label: "TAIL ANGLE", min: 0.2, max: 2 },
   { k: "whiskerLen", label: "WHISKER REACH", min: 0.3, max: 2 },
 ];
 const RAT_WORDS = {
