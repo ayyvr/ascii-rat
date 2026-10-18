@@ -42,6 +42,7 @@ const RAT_TYPES = {
 // Leaderboard data (stored in localStorage)
 const LEADERBOARD_KEY = "asciiRat.maze.leaderboard";
 let leaderboard = [];
+const mazeLeaderboardEl = document.getElementById("mazeLeaderboard");
 
 function loadLeaderboard() {
   try {
@@ -61,6 +62,7 @@ function addToLeaderboard(score, time, moves, level, date) {
   leaderboard.sort((a, b) => b.score - a.score);
   leaderboard = leaderboard.slice(0, 10); // Keep top 10
   saveLeaderboard();
+  renderLeaderboard();
 }
 
 function calculateScore(moves, optimal, time) {
@@ -68,6 +70,28 @@ function calculateScore(moves, optimal, time) {
   const moveScore = Math.max(0, 100 - (moves - optimal) * 5);
   const timeScore = Math.max(0, 100 - time / 1000);
   return Math.round(moveScore * 0.7 + timeScore * 0.3);
+}
+
+// Render leaderboard
+function renderLeaderboard() {
+  if (!mazeLeaderboardEl) return;
+  
+  let html = '<div class="leaderboard-title">BEST SCORES</div>';
+  
+  if (leaderboard.length === 0) {
+    html += '<div class="leaderboard-row"><span class="leaderboard-rank">-</span><span>No scores yet</span><span class="leaderboard-score">-</span></div>';
+  } else {
+    leaderboard.forEach((entry, index) => {
+      const timeStr = entry.time ? entry.time.toFixed(1) + "s" : "-";
+      html += `<div class="leaderboard-row">
+        <span class="leaderboard-rank">#${index + 1}</span>
+        <span>L${entry.level} ${entry.moves}m</span>
+        <span class="leaderboard-score">${entry.score}</span>
+      </div>`;
+    });
+  }
+  
+  mazeLeaderboardEl.innerHTML = html;
 }
 
 // Maze generation using recursive backtracking
@@ -581,3 +605,9 @@ loadLeaderboard();
 
 // Make modal draggable
 makeDraggable(document.querySelector("#gameOverlay .modal"));
+
+// Add state defaults for maze settings
+if (state.mazeCheeseType === undefined) {
+  state.mazeCheeseType = "WEDGE CLASSIC";
+  saveState();
+}

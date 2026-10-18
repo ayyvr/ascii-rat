@@ -187,6 +187,90 @@ pre:active {
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 .mclose:hover { color: #ffc9c9; border-color: #b85454; }
+
+/* ---------- Maze Modal Styling ---------- */
+.mazeModal {
+  width: min(800px, 95vw);
+  max-height: 85vh;
+}
+#gameScreen {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: var(--bg0);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.mazeLeaderboard {
+  padding: 1em;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  max-height: 200px;
+  overflow-y: auto;
+}
+.mazeLeaderboard .leaderboard-title {
+  font-size: clamp(11px, 1.4vw, 13px);
+  letter-spacing: 0.2em;
+  color: var(--fg-bright);
+  margin-bottom: 0.5em;
+  text-align: center;
+}
+.mazeLeaderboard .leaderboard-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4em 0.6em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: clamp(10px, 1.2vw, 12px);
+  color: var(--fg);
+}
+.mazeLeaderboard .leaderboard-row:last-child {
+  border-bottom: none;
+}
+.mazeLeaderboard .leaderboard-rank {
+  color: var(--fg-dim);
+  min-width: 30px;
+}
+.mazeLeaderboard .leaderboard-score {
+  color: var(--fg-bright);
+  font-weight: bold;
+}
+
+/* ---------- Mobile Maze Controls ---------- */
+#mazeJoystick {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  z-index: 100;
+}
+#mazeJoystickStick {
+  position: absolute;
+  left: 30px;
+  top: 30px;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+}
+#mazeDirectionIndicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  z-index: 100;
+  font-size: 40px;
+  text-align: center;
+  color: var(--fg-bright);
+  pointer-events: none;
+}
+
 /* ---------- v5: per-digit dot-matrix release stepper ---------- */
 #verBar {
   display: flex;
