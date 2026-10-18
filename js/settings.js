@@ -152,7 +152,7 @@ function drawPreviewTo(cv) {
   const shade = new Float32Array(W * H);
   const cy2 = Math.cos(0.55), sy2 = Math.sin(0.55);
   const cp2 = Math.cos(0.14), sp2 = Math.sin(0.14);
-  const scale = (W * 0.94) / 9;
+  const scale = (W * 0.98) / 9;
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
     const x1 = p.x * cy2 + p.z * sy2;
