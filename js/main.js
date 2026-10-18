@@ -1,29 +1,38 @@
 "use strict";
 
 // ---------- first visit: rat character creation before anything else ----------
-const createOverlay = document.getElementById("createOverlay");
-document.getElementById("createGo").addEventListener("click", () => {
-  state.setupDone = true;
-  saveState();
-  createOverlay.classList.remove("show");
-  createOverlay.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("setup");
-  // main rat reveals now, with its entrance animation
-  if (state.entrance !== "NONE") entranceT = performance.now();
-});
-document.getElementById("createReset").addEventListener("click", () => {
-  state.rat = JSON.parse(JSON.stringify(DEFAULTS.rat));
-  buildRat(state.rat);
-  drawRatPreview();
-  renderRatSliders(document.getElementById("createSliders"));
-});
-if (!state.setupDone) {
-  document.body.classList.add("setup");
-  createOverlay.classList.add("show");
-  createOverlay.setAttribute("aria-hidden", "false");
-  renderRatSliders(document.getElementById("createSliders"));
-  renderPalettes(document.getElementById("createPal"), document.getElementById("createPalName"));
-  drawRatPreview();
+function initMain() {
+  const createOverlay = document.getElementById("createOverlay");
+  document.getElementById("createGo").addEventListener("click", () => {
+    state.setupDone = true;
+    saveState();
+    createOverlay.classList.remove("show");
+    createOverlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("setup");
+    // main rat reveals now, with its entrance animation
+    if (state.entrance !== "NONE") entranceT = performance.now();
+  });
+  document.getElementById("createReset").addEventListener("click", () => {
+    state.rat = JSON.parse(JSON.stringify(DEFAULTS.rat));
+    buildRat(state.rat);
+    drawRatPreview();
+    renderRatSliders(document.getElementById("createSliders"));
+  });
+  if (!state.setupDone) {
+    document.body.classList.add("setup");
+    createOverlay.classList.add("show");
+    createOverlay.setAttribute("aria-hidden", "false");
+    renderRatSliders(document.getElementById("createSliders"));
+    renderPalettes(document.getElementById("createPal"), document.getElementById("createPalName"));
+    drawRatPreview();
+  }
+}
+
+// Run after all scripts are loaded
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initMain);
+} else {
+  initMain();
 }
 
 

@@ -180,7 +180,7 @@ function drawPreviewTo(cv) {
   const scale = state.previewZoom || 1;
   const cy2 = Math.cos(theta), sy2 = Math.sin(theta);
   const cp2 = Math.cos(0.14), sp2 = Math.sin(0.14);
-  const scale = (W * 0.98 * scale) / 9;
+  scale = (W * 0.98 * scale) / 9;
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
     const x1 = p.x * cy2 + p.z * sy2;

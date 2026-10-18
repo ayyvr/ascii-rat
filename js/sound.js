@@ -3,7 +3,13 @@
 // ---------- Chip-tune Sound Effects (F04) ----------
 
 // Sound system using Web Audio API
-const soundContext = new (window.AudioContext || window.webkitAudioContext)();
+let soundContext = null;
+function getSoundContext() {
+  if (!soundContext) {
+    soundContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return soundContext;
+}
 let soundEnabled = true;
 let soundVolume = 0.5;
 
@@ -33,8 +39,8 @@ const WAVE_TYPES = {
 
 // Create oscillator with chip-tune waveform
 function createOscillator(freq, waveType = WAVE_TYPES.SQUARE, duration = 0.1, volume = 0.3) {
-  const oscillator = soundContext.createOscillator();
-  const gainNode = soundContext.createGain();
+  const oscillator = getSoundContext().createOscillator();
+  const gainNode = getSoundContext().createGain();
   
   oscillator.type = waveType;
   oscillator.frequency.value = freq;
@@ -42,10 +48,10 @@ function createOscillator(freq, waveType = WAVE_TYPES.SQUARE, duration = 0.1, vo
   gainNode.gain.value = volume * soundVolume * (soundEnabled ? 1 : 0);
   
   oscillator.connect(gainNode);
-  gainNode.connect(soundContext.destination);
+  gainNode.connect(getSoundContext().destination);
   
   oscillator.start();
-  oscillator.stop(soundContext.currentTime + duration);
+  oscillator.stop(getSoundContext().currentTime + duration);
   
   return { oscillator, gainNode };
 }
@@ -143,8 +149,8 @@ function getSoundVolume() {
 
 // Resume audio context (needed for iOS Safari)
 function resumeAudioContext() {
-  if (soundContext.state === "suspended") {
-    soundContext.resume().catch(e => {
+  if (getSoundContext().state === "suspended") {
+    getSoundContext().resume().catch(e => {
       console.log("Audio context resume failed:", e);
     });
   }
