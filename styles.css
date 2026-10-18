@@ -65,6 +65,20 @@ pre:active {
   opacity: 0.85;
   text-align: center;
 }
+.hint2 {
+  margin-top: 0.4em;
+  font-size: clamp(10px, 1.4vw, 13px);
+  letter-spacing: 0.25em;
+  color: var(--fg-dim);
+  opacity: 0.85;
+  text-align: center;
+}
+.helpText {
+  font-size: clamp(11px, 1.5vw, 13.5px);
+  letter-spacing: 0.14em;
+  color: var(--fg);
+  line-height: 1.8;
+}
 .scanlines {
   position: fixed;
   inset: 0;

@@ -87,7 +87,8 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyS") toggleSettings();
   else if (e.code === "KeyW") toggleZen();
   else if (e.code === "KeyM") toggleGame();
-  else if (e.code === "Escape") { closeLog(); closeSettings(); closeGame(); }
+  else if (e.code === "QuestionMark") toggleHelp();
+  else if (e.code === "Escape") { closeLog(); closeSettings(); closeGame(); closeHelp(); }
 });
 
 // fit to viewport
@@ -112,4 +113,33 @@ function toggleParty() {
   saveState();
 }
 partyBtn.addEventListener("click", toggleParty);
+
+// ---------- help overlay ----------
+const helpOverlay = document.createElement("div");
+helpOverlay.id = "helpOverlay";
+helpOverlay.className = "overlay";
+helpOverlay.setAttribute("aria-hidden", "true");
+helpOverlay.innerHTML = `
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Help">
+    <div class="mhead">
+      <div class="mtitle">H E L P</div>
+      <button id="helpClose" class="mclose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="mbody">
+      <p class="helpText">drag to spin &middot; scroll to zoom &middot; P party &middot; L log &middot; S settings &middot; W wallpaper &middot; M maze &middot; space pause &middot; ? help</p>
+    </div>
+  </div>
+`;
+document.body.appendChild(helpOverlay);
+const helpClose = document.getElementById("helpClose");
+function toggleHelp() {
+  helpOverlay.classList.toggle("show");
+  helpOverlay.setAttribute("aria-hidden", helpOverlay.classList.contains("show") ? "false" : "true");
+}
+function closeHelp() {
+  helpOverlay.classList.remove("show");
+  helpOverlay.setAttribute("aria-hidden", "true");
+}
+helpClose?.addEventListener("click", closeHelp);
+helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) closeHelp(); });
 
