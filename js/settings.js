@@ -138,9 +138,17 @@ function applyBg() {
 
 // ---------- builder preview: pixel-dot rat silhouette (no spin) ----------
 let previewRot = 0;
+let previewAutoSpin = false;
+let previewSpinT = 0;
 function drawRatPreview() {
   drawPreviewTo(document.getElementById("ratPreview"));
   drawPreviewTo(document.getElementById("ratPreview2"));
+}
+function updatePreviewSpin(dt) {
+  if (previewAutoSpin) {
+    previewSpinT += dt;
+    previewRot = previewSpinT * 0.5;
+  }
 }
 function drawPreviewTo(cv) {
   if (!cv) return;
@@ -152,9 +160,10 @@ function drawPreviewTo(cv) {
   const depth = new Float32Array(W * H).fill(-1e9);
   const shade = new Float32Array(W * H);
   const theta = state.previewRot || previewRot;
+  const scale = state.previewZoom || 1;
   const cy2 = Math.cos(theta), sy2 = Math.sin(theta);
   const cp2 = Math.cos(0.14), sp2 = Math.sin(0.14);
-  const scale = (W * 0.98) / 9;
+  const scale = (W * 0.98 * scale) / 9;
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
     const x1 = p.x * cy2 + p.z * sy2;
@@ -596,3 +605,15 @@ drawChevrons();
 
 // Schedule initial tab overflow check
 scheduleTabOverflowCheck();
+
+// Auto-spin toggle buttons
+document.getElementById("previewSpinBtn")?.addEventListener("click", () => {
+  previewAutoSpin = !previewAutoSpin;
+  const btn = document.getElementById("previewSpinBtn");
+  if (btn) btn.textContent = previewAutoSpin ? "[ A ]" : "[ A ]";
+});
+document.getElementById("setPreviewSpinBtn")?.addEventListener("click", () => {
+  previewAutoSpin = !previewAutoSpin;
+  const btn = document.getElementById("setPreviewSpinBtn");
+  if (btn) btn.textContent = previewAutoSpin ? "[ A ]" : "[ A ]";
+});

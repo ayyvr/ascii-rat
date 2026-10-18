@@ -27,6 +27,8 @@ const DEFAULTS = {
   density: 1,
   halloween: false,
   previewRot: 0,
+  previewZoom: 1,
+  previewAutoSpin: false,
 };
 let state = JSON.parse(JSON.stringify(DEFAULTS));
 (function loadState() {
