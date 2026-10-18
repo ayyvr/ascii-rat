@@ -151,7 +151,7 @@ let previewAutoSpin = false;
 let previewSpinT = 0;
 function drawRatPreview() {
   drawPreviewTo(document.getElementById("ratPreview"));
-  drawPreviewTo(document.getElementById("ratPreview2"));
+  drawPreviewTo(document.getElementById("setPreview"));
 }
 function updatePreviewSpin(dt) {
   if (previewAutoSpin) {
@@ -159,6 +159,43 @@ function updatePreviewSpin(dt) {
     previewRot = previewSpinT * 0.5;
   }
 }
+
+// ---------- mini preview animation loop ----------
+// The mini preview is the single visual feedback while Settings is open:
+// - every tab: optional auto-spin rotation
+// - ANIMATION tab: previews the selected idle motion
+// - ANIMATION + STYLE tabs: replays the selected entrance effect
+// - RAT tab: rotation only (sculpting preview)
+let previewEntT = -1;   // entrance preview start time; -1 = idle
+let previewEntNext = 0; // when to auto-replay the entrance next
+let previewNow = 0;     // shared clock for the motion previews
+function replayPreviewEntrance() {
+  previewEntT = performance.now();
+  previewEntNext = 0;
+}
+function previewEntValue(now) {
+  if (state.entrance === "NONE") return 1;
+  if (!setOverlay.classList.contains("show")) return 1;
+  if (curTab !== "ANIMATION" && curTab !== "STYLE") return 1;
+  if (previewEntT < 0 && previewEntNext && now >= previewEntNext) previewEntT = now;
+  if (previewEntT < 0) return 1;
+  const ent = Math.min(1, (now - previewEntT) / 1400);
+  if (ent >= 1) { previewEntT = -1; previewEntNext = now + 2600; return 1; }
+  return ent;
+}
+function previewLoop(now) {
+  const dt = Math.min(0.05, (now - (previewLoop.last || now)) / 1000);
+  previewLoop.last = now;
+  updatePreviewSpin(dt);
+  previewNow = now;
+  const setShown = setOverlay.classList.contains("show");
+  const createShown = document.getElementById("createOverlay")?.classList.contains("show");
+  if (setShown || createShown) {
+    drawRatPreview(); // advances the entrance replay state machine via previewEntValue
+  }
+  requestAnimationFrame(previewLoop);
+}
+requestAnimationFrame(previewLoop);
 function drawPreviewTo(cv) {
   if (!cv) return;
   const ctx = cv.getContext("2d");
@@ -170,18 +207,42 @@ function drawPreviewTo(cv) {
   const shade = new Float32Array(W * H);
   const theta = state.previewRot || previewRot;
   let scale = state.previewZoom || 1;
+  // per-tab preview behaviour: each tab previews only the aspects it controls
+  const motion = setOverlay.classList.contains("show") && curTab === "ANIMATION" ? state.motion : null;
+  const ent = previewEntValue(previewNow);
+  const t = previewNow / 1000;
+  let ph = 0.14, xOff = 0, yOff = 0;
+  if (motion === "SCUTTLE") { yOff = 0.22 * Math.abs(Math.sin(t * 7)); ph += 0.05 * Math.sin(t * 14); }
+  else if (motion === "WALK") { yOff = 0.05 * Math.abs(Math.sin(t * 18)); ph += 0.03 * Math.sin(t * 18); }
+  else if (motion === "TUMBLE") ph += 0.55 * Math.sin(previewNow * 0.0012);
+  else if (motion === "ORBIT") { xOff = 1.4 * Math.cos(t * 0.6); yOff = 0.9 * Math.sin(t * 1.1); }
+  else if (motion === "BREATH") scale *= 1 + 0.09 * Math.sin(t * 1.4);
+  if (ent < 1 && state.entrance === "POP") {
+    const c1 = 1.70158, c3 = c1 + 1, u = ent - 1;
+    scale *= 1 + c3 * u * u * u + c1 * u * u;
+  }
   const cy2 = Math.cos(theta), sy2 = Math.sin(theta);
-  const cp2 = Math.cos(0.14), sp2 = Math.sin(0.14);
+  const cp2 = Math.cos(ph), sp2 = Math.sin(ph);
   scale = (W * 0.98 * scale) / 9;
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
+    if (ent < 1 && state.entrance === "MATERIALIZE" && p.b > ent) continue;
     const x1 = p.x * cy2 + p.z * sy2;
     const z1 = -p.x * sy2 + p.z * cy2;
-    const y2 = p.y * cp2 - z1 * sp2;
+    let y2 = p.y * cp2 - z1 * sp2;
     const z2 = p.y * sp2 + z1 * cp2;
-    const c2 = Math.round(W / 2 + x1 * scale);
+    if (motion === "WAVE") y2 += 0.14 * Math.sin(x1 * 2.5 + previewNow * 0.004 + z1 * 2);
+    if (motion === "WALK" && p.tag) {
+      const off = p.tag === "FL" || p.tag === "BR" ? 0 : Math.PI;
+      y2 += 0.13 * Math.max(0, Math.sin(t * 9 + off));
+    }
+    if (ent < 1 && state.entrance === "RAIN") {
+      const ep = Math.min(1, Math.max(0, (ent - p.b * 0.4) / 0.6));
+      y2 += (1 - ep) * (1 - ep) * 3.6;
+    }
+    const c2 = Math.round(W / 2 + (x1 + xOff) * scale);
     if (c2 < 0 || c2 >= W) continue;
-    const r2 = Math.round(H / 2 - y2 * scale);
+    const r2 = Math.round(H / 2 - (y2 + yOff) * scale);
     if (r2 < 0 || r2 >= H) continue;
     const idx = r2 * W + c2;
     if (z2 <= depth[idx]) continue;
@@ -333,9 +394,11 @@ function renderRatSliders(container) {
   }
 }
 function updateSculpt() {
-  const sculpting = setOverlay.classList.contains("show") && curTab === "RAT";
-  document.getElementById("stage").style.visibility = sculpting ? "hidden" : "";
-  if (sculpting) drawRatPreview();
+  // while Settings is open at all, the main rat does not render:
+  // the mini preview is the single source of visual feedback
+  const open = setOverlay.classList.contains("show");
+  document.getElementById("stage").style.visibility = open ? "hidden" : "";
+  if (open) drawRatPreview();
 }
 
 // ---------- settings: category tabs + panels ----------
@@ -347,8 +410,11 @@ function renderSetTabs() {
   setTabsEl.innerHTML = "";
   setTabsEl.style.display = "flex";
   SET_TABS.forEach((name) => {
-    const b = el("button", "tab" + (curTab === name ? " active" : ""), "[ " + name + " ]");
+    const active = curTab === name;
+    // only the selected tab keeps its [ ] braces
+    const b = el("button", "tab" + (active ? " active" : ""), active ? "[ " + name + " ]" : name);
     b.type = "button";
+    b.dataset.tab = name;
     b.addEventListener("click", () => {
       curTab = name;
       renderSettings();
@@ -358,17 +424,19 @@ function renderSetTabs() {
   });
   // Add overflow dropdown
   const dropdown = el("button", "tab tabDropdown");
-  dropdown.innerHTML = "[ \u25bc ]";
+  dropdown.innerHTML = "\u25bc";
   dropdown.type = "button";
   dropdown.style.display = "none";
   dropdown.id = "tabDropdownBtn";
   dropdown.addEventListener("click", () => {
-    // Show dropdown menu with overflowing tabs
+    let menu = document.querySelector(".tabDropdownMenu");
+    if (menu) { menu.remove(); return; }
     const rect = dropdown.getBoundingClientRect();
-    const menu = el("div", "tabDropdownMenu");
-    menu.style.cssText = "position:fixed;left:" + rect.left + "px;top:" + (rect.bottom) + "px;background:var(--panel);border:2px solid var(--border);z-index:100;min-width:120px;";
-    SET_TABS.forEach((name) => {
-      const item = el("button", "tab", "[ " + name + " ]");
+    menu = el("div", "tabDropdownMenu");
+    menu.style.cssText = "position:fixed;left:" + rect.left + "px;top:" + rect.bottom + "px;background:var(--panel);border:2px solid var(--border);z-index:100;min-width:120px;";
+    SET_TABS.filter((name) => hiddenTabs().includes(name)).forEach((name) => {
+      const active = curTab === name;
+      const item = el("button", "tab" + (active ? " active" : ""), active ? "[ " + name + " ]" : name);
       item.type = "button";
       item.addEventListener("click", () => {
         curTab = name;
@@ -379,25 +447,47 @@ function renderSetTabs() {
       menu.appendChild(item);
     });
     document.body.appendChild(menu);
-    const closeMenu = () => menu.remove();
-    setTimeout(closeMenu, 3000);
-    menu.addEventListener("click", (e) => e.stopPropagation());
+    // close on any click outside the menu
+    setTimeout(() => {
+      document.addEventListener("pointerdown", function closer(e) {
+        if (!menu.contains(e.target) && e.target !== dropdown) {
+          menu.remove();
+          document.removeEventListener("pointerdown", closer);
+        }
+      });
+    }, 0);
   });
   setTabsEl.appendChild(dropdown);
+  // tabs were rebuilt: re-measure overflow for the new DOM
+  scheduleTabOverflowCheck();
+}
+function hiddenTabs() {
+  const hidden = [];
+  setTabsEl.querySelectorAll(".tab:not(.tabDropdown)").forEach((b) => {
+    if (b.style.display === "none") hidden.push(b.dataset.tab);
+  });
+  return hidden;
 }
 function checkTabOverflow() {
   const container = setTabsEl;
   if (!container) return;
-  const tabs = container.querySelectorAll(".tab:not(.tabDropdown)");
   const dropdown = container.querySelector(".tabDropdown");
   if (!dropdown) return;
-  
-  let totalWidth = 0;
-  tabs.forEach(tab => { totalWidth += tab.offsetWidth; });
-  
-  const availableWidth = container.offsetWidth;
-  const needsDropdown = totalWidth > availableWidth;
-  dropdown.style.display = needsDropdown ? "block" : "none";
+  const tabs = Array.from(container.querySelectorAll(".tab:not(.tabDropdown)"));
+  // reset, then hide tabs from the end until everything (incl. the dropdown btn) fits
+  tabs.forEach((t) => { t.style.display = ""; });
+  dropdown.style.display = "none";
+  const fits = () => {
+    let w = dropdown.offsetWidth + 4;
+    tabs.forEach((t) => { if (t.style.display !== "none") w += t.offsetWidth + 2; });
+    return w <= container.offsetWidth;
+  };
+  if (fits()) return;
+  dropdown.style.display = "block";
+  for (let i = tabs.length - 1; i >= 0; i--) {
+    if (fits()) break;
+    tabs[i].style.display = "none";
+  }
 }
 
 // Check overflow on resize and initial render
@@ -433,10 +523,8 @@ function renderSettings() {
   setPanelsEl.innerHTML = "";
   const panel = el("div");
   if (curTab === "RAT") {
-    const cv = document.createElement("canvas");
-    cv.id = "ratPreview2";
-    cv.width = 132; cv.height = 52;
-    panel.append(cv, sectionHead("SCULPT YOUR RAT"));
+    // the mini preview lives in the modal header on every tab; no second canvas here
+    panel.append(sectionHead("SCULPT YOUR RAT"));
     const sliders = el("div");
     panel.append(sliders);
     renderRatSliders(sliders);
@@ -451,7 +539,7 @@ function renderSettings() {
     const ce = el("div", "optrow"), de = el("div", "palname");
     panel.append(ce, de);
     renderOptions(ce, ENTRANCES, () => state.entrance,
-      (n) => { state.entrance = n; saveState(); }, de, ENTRANCE_DESC);
+      (n) => { state.entrance = n; saveState(); replayPreviewEntrance(); }, de, ENTRANCE_DESC);
     panel.append(sectionHead("SPIN"));
     panel.append(sliderRow("SPIN SPEED", 0, 2, 0.05, () => state.spin,
       (v) => { state.spin = v; saveState(); }, (v) => Number(v).toFixed(2)));
@@ -473,13 +561,8 @@ function renderSettings() {
     panel.append(cb);
     renderOptions(cb, BGS, () => state.bg,
       (n) => { state.bg = n; applyBg(); saveState(); }, null, null);
-    panel.append(sectionHead("ENTRANCE"));
-    const ce = el("div", "optrow"), de = el("div", "palname");
-    panel.append(ce, de);
-    renderOptions(ce, ENTRANCES, () => state.entrance,
-      (n) => { state.entrance = n; saveState(); entranceT = performance.now(); }, de, ENTRANCE_DESC);
-    
-    // Leaf Settings
+
+    // Falling leaves belong with the other background/style settings
     panel.append(sectionHead("FALLING LEAVES"));
     panel.append(toggleRow("ENABLE FALLING LEAVES", () => state.leafEnabled,
       (v) => { state.leafEnabled = v; applyLeafSettings(); saveState(); }));
@@ -499,6 +582,12 @@ function renderSettings() {
     panel.append(ls, lsd);
     renderOptions(ls, SEASONS, () => state.leafSeasonOverride || "NONE",
       (n) => { state.leafSeasonOverride = n === "NONE" ? null : n; applyLeafSettings(); saveState(); }, lsd, SEASON_DESC);
+
+    panel.append(sectionHead("ENTRANCE"));
+    const ce = el("div", "optrow"), de = el("div", "palname");
+    panel.append(ce, de);
+    renderOptions(ce, ENTRANCES, () => state.entrance,
+      (n) => { state.entrance = n; saveState(); entranceT = performance.now(); replayPreviewEntrance(); }, de, ENTRANCE_DESC);
     
     if (isOctober) {
       panel.append(sectionHead("SEASONAL"));
@@ -552,6 +641,7 @@ function openSettings() {
   if (!m.style.height) m.style.height = Math.round(Math.min(innerHeight * 0.8, 560)) + "px";
   renderSettings();
   updateSculpt();
+  setPreviewSpinUI();
 }
 function closeSettings() {
   setOverlay.classList.remove("show");
@@ -659,15 +749,8 @@ function pixelBurst(x, y, n, spread, dist) {
 document.addEventListener("pointerdown", (e) => {
   if (e.target.closest("button")) pixelBurst(e.clientX, e.clientY, 6, 10, 24);
 }, true);
-document.addEventListener("pointerover", (e) => {
-  const b = e.target.closest("button");
-  if (b && !b.dataset.shx) {
-    b.dataset.shx = "1";
-    const r = b.getBoundingClientRect();
-    pixelBurst(r.left + r.width / 2, r.top + r.height / 2, 2, 8, 12);
-    setTimeout(() => { delete b.dataset.shx; }, 400);
-  }
-}, true);
+// NOTE: no hover/pointerover burst anymore — hovering an option now draws
+// attention by fading the saturation of its siblings (see styles.css)
 
 // ---------- boot: apply the persisted look ----------
 applyHalloween();
@@ -681,13 +764,18 @@ drawChevrons();
 scheduleTabOverflowCheck();
 
 // Auto-spin toggle buttons
-document.getElementById("previewSpinBtn")?.addEventListener("click", () => {
+function setPreviewSpinUI() {
+  [document.getElementById("previewSpinBtn"), document.getElementById("setPreviewSpinBtn")].forEach((b) => {
+    if (!b) return;
+    b.classList.toggle("active", previewAutoSpin);
+    b.textContent = previewAutoSpin ? "[ A ]" : "A";
+    b.title = previewAutoSpin ? "Auto-spin: on" : "Auto-spin: off";
+  });
+}
+function togglePreviewSpin() {
   previewAutoSpin = !previewAutoSpin;
-  const btn = document.getElementById("previewSpinBtn");
-  if (btn) btn.textContent = previewAutoSpin ? "[ A ]" : "[ A ]";
-});
-document.getElementById("setPreviewSpinBtn")?.addEventListener("click", () => {
-  previewAutoSpin = !previewAutoSpin;
-  const btn = document.getElementById("setPreviewSpinBtn");
-  if (btn) btn.textContent = previewAutoSpin ? "[ A ]" : "[ A ]";
-});
+  if (!previewAutoSpin) { previewRot = 0; previewSpinT = 0; }
+  setPreviewSpinUI();
+}
+document.getElementById("previewSpinBtn")?.addEventListener("click", togglePreviewSpin);
+document.getElementById("setPreviewSpinBtn")?.addEventListener("click", togglePreviewSpin);

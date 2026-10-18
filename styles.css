@@ -333,6 +333,30 @@ pre:active {
   padding: 0.1em;
   margin: 0 1.2em;
 }
+/* the settings tab strip: standard connected tabs, one line, no wrapping */
+#setTabs {
+  flex-wrap: nowrap;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+#setTabs .tab {
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.45em 0.75em;
+  color: var(--fg-dim);
+}
+#setTabs .tab:hover { color: var(--fg-mid); background: var(--deep); }
+#setTabs .tab.active {
+  color: var(--fg-bright);
+  background: var(--deep);
+  border-bottom-color: var(--fg);
+  margin-top: 0;
+}
+#setTabs .tabDropdown { min-width: 40px; border-bottom: 2px solid transparent; }
 .tabContainer .optrow {
   margin: 0;
   padding: 0;
@@ -453,6 +477,22 @@ body.halloween {
   gap: 0.5em;
   margin: 0.4em 0 0.8em;
 }
+/* option rows: hovering an option fades the saturation of its siblings
+   in a smooth transition — no shimmer burst (removed from settings.js) */
+.optrow .tab, .optrow .swatch {
+  transition: color 0.15s, border-color 0.15s, background 0.15s,
+    transform 0.08s, filter 0.25s ease, opacity 0.25s ease;
+}
+.optrow:hover .tab:not(:hover),
+.optrow:hover .swatch:not(:hover) {
+  filter: saturate(0.15) brightness(0.7);
+  opacity: 0.6;
+}
+.optrow:hover .tab.active:not(:hover),
+.optrow:hover .swatch.active:not(:hover) {
+  filter: saturate(0.45) brightness(0.8);
+  opacity: 0.8;
+}
 .shead {
   margin: 0.9em 0 0.2em;
   font-size: 10px;
@@ -539,7 +579,9 @@ input[type="range"]::-moz-range-thumb {
   image-rendering: pixelated;
   border: 1px solid var(--border);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  pointer-events: none; /* the mini preview is a passive display (v5) */
 }
+.previewCtrl.active { color: var(--fg-bright); border-color: var(--fg); background: var(--deep); }
 .previewCtrl {
   font-family: inherit;
   font-size: 10px;
@@ -570,6 +612,7 @@ input[type="range"]::-moz-range-thumb {
   image-rendering: pixelated;
   border: 1px solid var(--border);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  pointer-events: none; /* the mini preview is a passive display (v5) */
 }
 .resizeHandle {
   position: absolute;
@@ -629,6 +672,7 @@ input[type="range"]::-moz-range-thumb {
   image-rendering: pixelated;
   border: 1px solid var(--border);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  pointer-events: none; /* the mini preview is a passive display (v5) */
 }
 #createOverlay .modal { width: min(520px, 92vw); }
 body.setup #stage,
