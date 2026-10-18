@@ -190,8 +190,12 @@ function previewLoop(now) {
   previewNow = now;
   const setShown = setOverlay.classList.contains("show");
   const createShown = document.getElementById("createOverlay")?.classList.contains("show");
-  if (setShown || createShown) {
-    drawRatPreview(); // advances the entrance replay state machine via previewEntValue
+  // only redraw when something actually animates; static draws are
+  // triggered by the tab/slider/palette handlers
+  const entAnimating = setShown ? previewEntValue(now) < 1 : false;
+  const motionAnimating = setShown && curTab === "ANIMATION" && state.motion !== "SPIN";
+  if ((setShown || createShown) && (previewAutoSpin || entAnimating || motionAnimating)) {
+    drawRatPreview();
   }
   requestAnimationFrame(previewLoop);
 }
@@ -205,8 +209,8 @@ function drawPreviewTo(cv) {
   const cols = [pal.dim, pal.mid, pal.fg, pal.bright];
   const depth = new Float32Array(W * H).fill(-1e9);
   const shade = new Float32Array(W * H);
-  const theta = state.previewRot || previewRot;
-  let scale = state.previewZoom || 1;
+  const theta = previewRot;
+  let scale = 1; // let: motion/entrance previews rescale this below
   // per-tab preview behaviour: each tab previews only the aspects it controls
   const motion = setOverlay.classList.contains("show") && curTab === "ANIMATION" ? state.motion : null;
   const ent = previewEntValue(previewNow);
@@ -527,10 +531,14 @@ function scheduleTabOverflowCheck() {
   tabOverflowCheck = setTimeout(checkTabOverflow, 50);
 }
 window.addEventListener("resize", scheduleTabOverflowCheck);
+function shareLink(code) {
+  // location.origin is "null" on file:// pages; build from the current URL instead
+  return location.href.split(/[?#]/)[0] + "?rat=" + code;
+}
 function shareRow() {
   const row = el("div", "srow");
   const code = ratCode();
-  const link = location.origin + location.pathname + "?rat=" + code;
+  const link = shareLink(code);
   const top = el("div", "srowtop");
   top.append(el("span", "slabel", "SHARE YOUR RAT"));
   const btn = el("button", "tab", "[ COPY RAT LINK ]");
@@ -639,8 +647,6 @@ function renderSettings() {
       (v) => { state.zoomSpeed = v; saveState(); }, (v) => Number(v).toFixed(2) + "x"));
   } else if (curTab === "SHARE") {
     panel.append(sectionHead("SHARE YOUR RAT"));
-    const code = ratCode();
-    const link = location.origin + location.pathname + "?rat=" + code;
     panel.append(shareRow());
     panel.append(sectionHead("DIAGNOSTICS"));
     const diag = el("div", "srow");
@@ -811,3 +817,5 @@ function togglePreviewSpin() {
 }
 document.getElementById("previewSpinBtn")?.addEventListener("click", togglePreviewSpin);
 document.getElementById("setPreviewSpinBtn")?.addEventListener("click", togglePreviewSpin);
+// sync the [ A ] buttons with the restored saved state on boot
+setPreviewSpinUI();

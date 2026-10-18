@@ -43,6 +43,9 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
 
+  // settings open: main rat stays de-rendered, skip the heavy per-frame work
+  const settingsOpen = setOverlay.classList.contains("show");
+
   // entrance animation progress (1 = settled)
   const ent = entranceT >= 0 ? Math.min(1, (now - entranceT) / 1400) : 1;
   if (ent >= 1) entranceT = -1;
@@ -107,91 +110,94 @@ function frame(now) {
     document.body.style.setProperty("--party-hue", partyHue.toFixed(1));
   }
 
-  // clear
-  grid.fill(-1e9);
+  if (!settingsOpen) {
+    // clear
+    grid.fill(-1e9);
 
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i];
-    // yaw around Y
-    const x1 = p.x * cy + p.z * sy;
-    const z1 = -p.x * sy + p.z * cy;
-    // pitch around X
-    let y2 = p.y * cp - z1 * sp;
-    const z2 = p.y * sp + z1 * cp;
-    // WAVE mode: jelly undulation along the body
-    if (motion === "WAVE") y2 += 0.14 * Math.sin(x1 * 2.5 + now * 0.004 + z1 * 2);
-    // WALK mode: diagonal-gait leg pumps
-    if (motion === "WALK" && p.tag) {
-      const off = p.tag === "FL" || p.tag === "BR" ? 0 : Math.PI;
-      y2 += 0.13 * Math.max(0, Math.sin(walkT + off));
-    }
-    // entrance animation point effects
-    if (ent < 1) {
-      if (state.entrance === "MATERIALIZE" && p.b > ent) continue;
-      if (state.entrance === "RAIN") {
-        const ep = Math.min(1, Math.max(0, (ent - p.b * 0.4) / 0.6));
-        y2 += (1 - ep) * (1 - ep) * 3.6;
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      // yaw around Y
+      const x1 = p.x * cy + p.z * sy;
+      const z1 = -p.x * sy + p.z * cy;
+      // pitch around X
+      let y2 = p.y * cp - z1 * sp;
+      const z2 = p.y * sp + z1 * cp;
+      // WAVE mode: jelly undulation along the body
+      if (motion === "WAVE") y2 += 0.14 * Math.sin(x1 * 2.5 + now * 0.004 + z1 * 2);
+      // WALK mode: diagonal-gait leg pumps
+      if (motion === "WALK" && p.tag) {
+        const off = p.tag === "FL" || p.tag === "BR" ? 0 : Math.PI;
+        y2 += 0.13 * Math.max(0, Math.sin(walkT + off));
       }
+      // entrance animation point effects
+      if (ent < 1) {
+        if (state.entrance === "MATERIALIZE" && p.b > ent) continue;
+        if (state.entrance === "RAIN") {
+          const ep = Math.min(1, Math.max(0, (ent - p.b * 0.4) / 0.6));
+          y2 += (1 - ep) * (1 - ep) * 3.6;
+        }
+      }
+
+      const col = Math.round(COLS / 2 + (x1 + xOff) * scale * CHAR_ASPECT);
+      if (col < 0 || col >= COLS) continue;
+      const row = Math.round(ROWS / 2 - (y2 + yOff) * scale);
+      if (row < 0 || row >= ROWS) continue;
+
+      const idx = row * COLS + col;
+      if (z2 <= grid[idx]) continue;
+      grid[idx] = z2;
+
+      let s;
+      if (p.f !== undefined) {
+        s = p.f;
+      } else {
+        // rotate normal the same way
+        const nx1 = p.nx * cy + p.nz * sy;
+        const nz1 = -p.nx * sy + p.nz * cy;
+        const ny2 = p.ny * cp - nz1 * sp;
+        const nz2 = p.ny * sp + nz1 * cp;
+        const d = nx1 * LIGHT[0] + ny2 * LIGHT[1] + nz2 * LIGHT[2];
+        s = 0.5 + 0.5 * d;                 // lambert 0..1
+        s = Math.pow(s, 0.85);
+        if (z2 < -0.4) s *= 0.55;          // dim far side slightly (cheap depth cue)
+      }
+      chars[idx] = shadeChar(s);
     }
 
-    const col = Math.round(COLS / 2 + (x1 + xOff) * scale * CHAR_ASPECT);
-    if (col < 0 || col >= COLS) continue;
-    const row = Math.round(ROWS / 2 - (y2 + yOff) * scale);
-    if (row < 0 || row >= ROWS) continue;
+    // build frame, clearing unused cells
+    let out = "";
+    for (let r = 0; r < ROWS; r++) {
+      const start = r * COLS;
+      for (let c = 0; c < COLS; c++) {
+        const idx = start + c;
+        if (grid[idx] === -1e9) chars[idx] = " ";
+        out += chars[idx];
+      }
+      if (r < ROWS - 1) out += "\n";
+    }
 
-    const idx = row * COLS + col;
-    if (z2 <= grid[idx]) continue;
-    grid[idx] = z2;
-
-    let s;
-    if (p.f !== undefined) {
-      s = p.f;
+    if (party) {
+      // rainbow waves: each line rides its own hue
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      pre.innerHTML = out
+        .split("\n")
+        .map((ln, r) => {
+          const h = (partyHue + r * 13) % 360;
+          return '<span style="color:hsl(' + h + ', 95%, 68%)">' + esc(ln) + "</span>";
+        })
+        .join("\n");
     } else {
-      // rotate normal the same way
-      const nx1 = p.nx * cy + p.nz * sy;
-      const nz1 = -p.nx * sy + p.nz * cy;
-      const ny2 = p.ny * cp - nz1 * sp;
-      const nz2 = p.ny * sp + nz1 * cp;
-      const d = nx1 * LIGHT[0] + ny2 * LIGHT[1] + nz2 * LIGHT[2];
-      s = 0.5 + 0.5 * d;                 // lambert 0..1
-      s = Math.pow(s, 0.85);
-      if (z2 < -0.4) s *= 0.55;          // dim far side slightly (cheap depth cue)
+      pre.textContent = out;
     }
-    chars[idx] = shadeChar(s);
+
+    // live orientation readout (H = yaw, V = pitch)
+    const hdeg = (((theta * 180 / Math.PI) % 360) + 360) % 360;
+    const vdeg = (pitch * 180) / Math.PI;
+    readout.textContent =
+      "H " + hdeg.toFixed(1).padStart(5, "0") + "\u00B0" +
+      "   V " + (vdeg < 0 ? "-" : "+") + Math.abs(vdeg).toFixed(1).padStart(4, "0") + "\u00B0";
   }
 
-  // build frame, clearing unused cells
-  let out = "";
-  for (let r = 0; r < ROWS; r++) {
-    const start = r * COLS;
-    for (let c = 0; c < COLS; c++) {
-      const idx = start + c;
-      if (grid[idx] === -1e9) chars[idx] = " ";
-      out += chars[idx];
-    }
-    if (r < ROWS - 1) out += "\n";
-  }
-
-  if (party) {
-    // rainbow waves: each line rides its own hue
-    const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-    pre.innerHTML = out
-      .split("\n")
-      .map((ln, r) => {
-        const h = (partyHue + r * 13) % 360;
-        return '<span style="color:hsl(' + h + ', 95%, 68%)">' + esc(ln) + "</span>";
-      })
-      .join("\n");
-  } else {
-    pre.textContent = out;
-  }
-
-  // live orientation readout (H = yaw, V = pitch)
-  const hdeg = (((theta * 180 / Math.PI) % 360) + 360) % 360;
-  const vdeg = (pitch * 180) / Math.PI;
-  readout.textContent =
-    "H " + hdeg.toFixed(1).padStart(5, "0") + "\u00B0" +
-    "   V " + (vdeg < 0 ? "-" : "+") + Math.abs(vdeg).toFixed(1).padStart(4, "0") + "\u00B0";
 
   // fps counter (toggled in PERFORMANCE)
   fpsFrames++;

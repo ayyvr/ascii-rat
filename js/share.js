@@ -143,7 +143,8 @@ function applyShareCode(code) {
 // Generate share URL
 function generateShareURL() {
   const code = encodeShareCode();
-  return `${location.origin}${location.pathname}?r=${code}`;
+  // location.origin is "null" on file:// pages; build from the current URL instead
+  return `${location.href.split(/[?#]/)[0]}?r=${code}`;
 }
 
 // Auto-translate old URLs
@@ -162,7 +163,7 @@ function checkOldShareFormat() {
       
       // Update URL to new format
       const newCode = encodeShareCode();
-      const newURL = `${location.origin}${location.pathname}?r=${newCode}`;
+      const newURL = `${location.href.split(/[?#]/)[0]}?r=${newCode}`;
       window.history.replaceState({}, "", newURL);
     } else {
       showNotification("Failed to translate old share code", "warning");
