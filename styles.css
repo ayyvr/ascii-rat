@@ -212,17 +212,30 @@ pre:active {
   background: var(--panel);
   color: var(--fg-mid);
   border: 2px solid var(--border);
+  border-bottom: none;
+  border-radius: 0.25em 0.25em 0 0;
   padding: 0.45em 0.9em;
+  margin-right: 0.1em;
   cursor: pointer;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
-  transition: transform 0.08s, color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.tab:hover { color: var(--fg-bright); }
-/* press-jump replaced by the pixel ripple + hover shimmer (see .ppx/.shx) */
+.tab:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
 .tab.active {
   color: var(--deep);
   background: var(--fg);
   border-color: var(--fg-bright);
+  border-bottom-color: var(--panel);
+  margin-top: -1px;
+}
+.tabContainer {
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
+  padding: 0.1em;
+  margin: 0 1.2em;
+}
+.tabContainer .optrow {
+  margin: 0;
+  padding: 0;
 }
 /* press-jump replaced by the pixel ripple + hover shimmer (see .ppx/.shx) */
 .mbody {
