@@ -504,6 +504,12 @@ body.bg-fall {
 @keyframes bgFall {
   to { background-position: -43px 387px, 61px 549px, -83px 747px, 0 0; }
 }
+/* PR1-5: while the settings window is open the full-screen background
+   effects hold still - the mini preview in Settings shows them live */
+body.set-open.bg-stars,
+body.set-open.bg-rain,
+body.set-open.bg-fall,
+body.set-open.halloween { animation-play-state: paused; }
 body.halloween {
   background-image:
     radial-gradient(circle at 80% 10%, #f4e7c8 24px, rgba(210, 180, 255, 0.3) 32px, transparent 60px),
@@ -728,7 +734,8 @@ input[type="range"]::-moz-range-thumb {
   height: 150px;
   pointer-events: none;
   background: radial-gradient(circle, var(--glow) 0%, transparent 62%);
-  z-index: 4;
+  /* PR1-9: cursor glow and dot must render above the z-10 overlays */
+  z-index: 20;
 }
 .cdot {
   position: fixed;
@@ -737,7 +744,7 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
   background: var(--fg-bright);
   box-shadow: 0 0 6px var(--glow);
-  z-index: 6;
+  z-index: 21;
 }
 
 /* ---------- rat builder (first visit) ---------- */

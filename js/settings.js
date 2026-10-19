@@ -150,6 +150,9 @@ let previewRot = 0;
 let previewAutoSpin = false;
 let previewSpinT = 0;
 let previewZoom = 1; // I02: wheel-zoom level for the interactive previews
+let previewZoomTarget = 1; // PR1-10: eased toward by the preview loop when smooth zoom is on
+let zoomDemoT = 0; // PR1-10: phase of the PREFERENCES-tab zoom-speed demo
+let zoomDemoOn = false; // PR1-10: demo re-armed whenever the PREFERENCES tab renders
 function drawRatPreview() {
   drawPreviewTo(document.getElementById("ratPreview"));
   drawPreviewTo(document.getElementById("setPreview"));
@@ -196,21 +199,128 @@ function previewLoop(now) {
   // triggered by the tab/slider/palette handlers
   const entAnimating = setShown ? previewEntValue(now) < 1 : false;
   const motionAnimating = setShown && curTab === "ANIMATION" && state.motion !== "SPIN";
-  if ((setShown || createShown) && (previewAutoSpin || entAnimating || motionAnimating)) {
+  // PR1-6: background effects animate continuously on the STYLE tab
+  const effBg = state.halloween ? "HALLOWEEN" : state.bg;
+  const bgAnimating = setShown && curTab === "STYLE" &&
+    (effBg === "STARFIELD" || effBg === "PIXEL RAIN" || effBg === "FALL LEAVES" || effBg === "HALLOWEEN");
+  // PR1-10: on the PREFERENCES tab the mini preview demonstrates the
+  // configured zoom speed by breathing between 0.72x and 1.57x (only
+  // while smooth zoom is on; any manual wheel input cancels the demo).
+  const zoomDemoActive = zoomDemoOn && setShown && curTab === "PREFERENCES" && state.smoothZoom;
+  if (zoomDemoActive) {
+    zoomDemoT += dt * state.zoomSpeed * 1.5;
+    previewZoomTarget = 1.145 + 0.425 * Math.sin(zoomDemoT);
+  }
+  // PR1-10: with smooth zoom on, wheel targets ease in at the same rate
+  // as the main renderer; the loop keeps redrawing until the zoom lands.
+  let zoomAnimating = false;
+  if ((setShown || createShown) && state.smoothZoom && Math.abs(previewZoomTarget - previewZoom) > 0.0004) {
+    previewZoom += (previewZoomTarget - previewZoom) * Math.min(1, dt * 6 * state.zoomSpeed);
+    zoomAnimating = true;
+  }
+  if ((setShown || createShown) && (previewAutoSpin || entAnimating || motionAnimating || bgAnimating || zoomAnimating)) {
     drawRatPreview();
   }
   requestAnimationFrame(previewLoop);
 }
 requestAnimationFrame(previewLoop);
+// PR1-6: deterministic pseudo-random positions for the preview background layers
+function previewHash(n) {
+  const x = Math.sin(n * 127.1) * 43758.5453;
+  return x - Math.floor(x);
+}
+// PR1-6: canvas-drawn miniatures of the full-screen background effects so
+// the STYLE tab preview shows what the main screen will look like. The
+// full-screen effect itself is paused while Settings is open (PR1-5) -
+// the mini preview is the live one until the window closes.
+function drawPreviewBg(ctx, W, H, pal) {
+  const t = previewNow / 1000;
+  let bg = state.halloween ? "HALLOWEEN" : state.bg; // body.halloween overrides, like the CSS cascade
+  if (bg === "PIXEL GRID") {
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = pal.mid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 12; x < W; x += 12) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); }
+    for (let y = 12; y < H; y += 12) { ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  } else if (bg === "STARFIELD") {
+    for (let i = 0; i < 64; i++) {
+      const layer = i < 40 ? 0 : 1;
+      const sp = layer === 0 ? 5 : 9;                 // slow drift, like bgStars
+      const y = (previewHash(i + 99) * H + t * sp) % H;
+      const x = previewHash(i) * W;
+      const tw = 0.25 + 0.75 * Math.abs(Math.sin(t * 1.4 + i * 2.1)); // twinkle
+      ctx.globalAlpha = tw * (layer === 0 ? 0.8 : 0.5);
+      ctx.fillStyle = pal.fg;
+      const sz = layer === 0 ? 2 : 1;
+      ctx.fillRect(x, y, sz, sz);
+    }
+    ctx.globalAlpha = 1;
+  } else if (bg === "PIXEL RAIN") {
+    for (let i = 0; i < 34; i++) {
+      const sp = 26 + previewHash(i + 7) * 34;
+      const len = 4 + Math.floor(previewHash(i + 31) * 5);
+      const y = (previewHash(i + 55) * (H + len) + t * sp) % (H + len) - len;
+      const x = Math.floor(previewHash(i) * W);
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = pal.mid;
+      ctx.fillRect(x, y, 1, len);
+    }
+    ctx.globalAlpha = 1;
+  } else if (bg === "FALL LEAVES") {
+    const leafCols = ["#c96a2a", "#a83b28", "#d9a441"]; // same tints as body.bg-fall
+    for (let i = 0; i < 24; i++) {
+      const layer = i % 3;
+      const sp = 9 + layer * 6 + previewHash(i) * 5;
+      const y = (previewHash(i + 41) * (H + 4) + t * sp) % (H + 4) - 4;
+      const x = ((previewHash(i + 13) * W + 12 * Math.sin(t * 0.8 + i * 1.9)) % W + W) % W;
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = leafCols[layer];
+      const sz = layer === 2 ? 2 : 3;
+      ctx.fillRect(x, y, sz, sz);
+    }
+    ctx.globalAlpha = 1;
+  } else if (bg === "HALLOWEEN") {
+    // moon + purple/orange sparkles, like body.halloween
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = "#d2b4ff";
+    ctx.beginPath();
+    ctx.arc(W * 0.8, H * 0.22, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "#f4e7c8";
+    ctx.beginPath();
+    ctx.arc(W * 0.8, H * 0.22, 9, 0, Math.PI * 2);
+    ctx.fill();
+    const sparkCols = ["rgba(148, 90, 220, 0.7)", "rgba(255, 120, 40, 0.55)"];
+    for (let i = 0; i < 40; i++) {
+      const x = previewHash(i + 5) * W;
+      const y = (previewHash(i + 77) * H + t * 3) % H;
+      ctx.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(t + i));
+      ctx.fillStyle = sparkCols[i % 2];
+      ctx.fillRect(x, y, 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
 function drawPreviewTo(cv) {
   if (!cv) return;
   const ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
   ctx.clearRect(0, 0, W, H);
   const pal = curPalObj || PALETTES[0];
-  const cols = [pal.dim, pal.mid, pal.fg, pal.bright];
-  const depth = new Float32Array(W * H).fill(-1e9);
-  const shade = new Float32Array(W * H);
+  const palCols = [pal.dim, pal.mid, pal.fg, pal.bright];
+  // PR1-6/PR1-8: the mini preview is a miniature of the main screen: a
+  // coarse character grid where every occupied cell is drawn as the real
+  // ramp glyph in its palette shade, with the background effect behind it.
+  const cellW = 6, cellH = 10; // char cell - same 0.6 aspect as the main screen
+  const gcols = Math.floor(W / cellW);
+  const grows = Math.floor(H / cellH);
+  drawPreviewBg(ctx, W, H, pal);
+  const depth = new Float32Array(gcols * grows).fill(-1e9);
+  const shade = new Float32Array(gcols * grows);
   const theta = previewRot;
   let scale = previewZoom; // let: motion/entrance previews rescale this below
   // per-tab preview behaviour: each tab previews only the aspects it controls
@@ -229,7 +339,9 @@ function drawPreviewTo(cv) {
   }
   const cy2 = Math.cos(theta), sy2 = Math.sin(theta);
   const cp2 = Math.cos(ph), sp2 = Math.sin(ph);
-  scale = (W * 0.98 * scale) / 9;
+  // project onto the character grid exactly like the main screen:
+  // columns get scale*CHAR_ASPECT, rows get scale
+  scale = (gcols * 0.9 * scale) / (9 * CHAR_ASPECT);
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
     if (ent < 1 && state.entrance === "MATERIALIZE" && p.b > ent) continue;
@@ -246,11 +358,11 @@ function drawPreviewTo(cv) {
       const ep = Math.min(1, Math.max(0, (ent - p.b * 0.4) / 0.6));
       y2 += (1 - ep) * (1 - ep) * 3.6;
     }
-    const c2 = Math.round(W / 2 + (x1 + xOff) * scale);
-    if (c2 < 0 || c2 >= W) continue;
-    const r2 = Math.round(H / 2 - (y2 + yOff) * scale);
-    if (r2 < 0 || r2 >= H) continue;
-    const idx = r2 * W + c2;
+    const c2 = Math.round(gcols / 2 + (x1 + xOff) * scale * CHAR_ASPECT);
+    if (c2 < 0 || c2 >= gcols) continue;
+    const r2 = Math.round(grows / 2 - (y2 + yOff) * scale);
+    if (r2 < 0 || r2 >= grows) continue;
+    const idx = r2 * gcols + c2;
     if (z2 <= depth[idx]) continue;
     depth[idx] = z2;
     let s;
@@ -265,13 +377,20 @@ function drawPreviewTo(cv) {
     }
     shade[idx] = Math.max(0.05, Math.min(1, s));
   }
-  for (let r2 = 0; r2 < H; r2++) {
-    for (let c2 = 0; c2 < W; c2++) {
-      const idx = r2 * W + c2;
+  ctx.font = cellH + "px monospace";
+  ctx.textBaseline = "top";
+  for (let r2 = 0; r2 < grows; r2++) {
+    for (let c2 = 0; c2 < gcols; c2++) {
+      const idx = r2 * gcols + c2;
       if (depth[idx] <= -1e8) continue;
+      // PR1-8: pass each cell's shade through the selected character ramp;
+      // cells that land on the ramp's space char are left undrawn, mirroring
+      // the main renderer (MINIMAL hides shades < ~0.16, GLYPH hides none).
+      const ch = shadeChar(shade[idx]);
+      if (ch === " ") continue;
       const ci = Math.min(3, Math.max(0, Math.round(shade[idx] * 3)));
-      ctx.fillStyle = cols[ci];
-      ctx.fillRect(c2, r2, 1, 1);
+      ctx.fillStyle = palCols[ci];
+      ctx.fillText(ch, c2 * cellW, r2 * cellH);
     }
   }
 }
@@ -330,9 +449,16 @@ function renderRamps(container) {
       ramp = RAMPS[name];
       saveState();
       renderRamps(container);
+      // PR1-8: re-shade the mini preview through the new ramp immediately
+      drawRatPreview();
     });
     container.appendChild(b);
   });
+  // PR1-8: live legend of the selected ramp - space (the "empty" cell)
+  // is shown as a centered dot so the hidden shades are visible.
+  const legend = el("div", "palname",
+    "RAMP CHARS [ " + ramp.split("").map((c) => (c === " " ? "\u00B7" : c)).join("") + " ]");
+  container.appendChild(legend);
 }
 function renderMotions(container, descEl) {
   container.innerHTML = "";
@@ -565,6 +691,13 @@ function shareRow() {
   return row;
 }
 function renderSettings() {
+  // PR1-10: leaving the PREFERENCES tab ends the zoom-speed demo and
+  // resets the preview to its neutral 1x zoom level
+  if (renderSettings.lastTab === "PREFERENCES" && curTab !== "PREFERENCES") {
+    zoomDemoOn = false;
+    previewZoom = previewZoomTarget = 1;
+  }
+  renderSettings.lastTab = curTab;
   renderSetTabs();
   setPanelsEl.innerHTML = "";
   const panel = el("div");
@@ -645,6 +778,10 @@ function renderSettings() {
         (v) => { state.halloween = v; applyHalloween(); saveState(); renderSettings(); }));
     }
   } else if (curTab === "PREFERENCES") {
+    // PR1-10: the zoom-speed demo runs only while PREFERENCES is the
+    // active tab; re-arm it on every render so each visit starts fresh
+    zoomDemoOn = state.smoothZoom;
+    zoomDemoT = 0;
     panel.append(sectionHead("CURSOR"));
     const cc = el("div", "optrow");
     panel.append(cc);
@@ -754,6 +891,9 @@ function applyFx() {
 function openSettings() {
   setOverlay.classList.add("show");
   setOverlay.setAttribute("aria-hidden", "false");
+  // PR1-5: while Settings is open the full-screen background effects hold
+  // still; the mini preview shows them live until the window closes
+  document.body.classList.add("set-open");
   const m = setOverlay.querySelector(".modal");
   // F07: fill the screen on mobile; desktop keeps the fixed-height modal
   if (isMobileDevice()) {
@@ -770,6 +910,8 @@ function openSettings() {
 function closeSettings() {
   setOverlay.classList.remove("show");
   setOverlay.setAttribute("aria-hidden", "true");
+  // PR1-5: release the full-screen background effects on close
+  document.body.classList.remove("set-open");
   updateSculpt();
   // PR1-4: Trigger main rat entrance animation when closing Settings
   if (state.entrance !== "NONE") {
@@ -945,8 +1087,17 @@ function attachPreviewInteractivity(cv) {
   cv.addEventListener("pointercancel", endDrag);
   cv.addEventListener("wheel", (e) => {
     e.preventDefault();
-    previewZoom = Math.max(0.5, Math.min(3, previewZoom * (e.deltaY < 0 ? 1.12 : 0.9)));
-    drawRatPreview();
+    // PR1-10: manual wheel input cancels the PREFERENCES zoom demo; with
+    // smooth zoom on the new level eases in at the configured zoom speed,
+    // otherwise it snaps immediately.
+    zoomDemoOn = false;
+    const next = Math.max(0.5, Math.min(3, previewZoom * (e.deltaY < 0 ? 1.12 : 0.9)));
+    if (state.smoothZoom) {
+      previewZoomTarget = next;
+    } else {
+      previewZoom = previewZoomTarget = next;
+      drawRatPreview();
+    }
   }, { passive: false });
 }
 attachPreviewInteractivity(document.getElementById("ratPreview"));
@@ -954,3 +1105,5 @@ attachPreviewInteractivity(document.getElementById("setPreview"));
 
 // boot sync: FPS badge visibility follows the saved setting (I10)
 fpsEl.classList.toggle("on", state.fps);
+
+
