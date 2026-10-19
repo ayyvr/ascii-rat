@@ -44,6 +44,7 @@ h1 {
 #stage {
   position: relative;
   line-height: 0;
+  z-index: 1;
 }
 pre {
   font-family: inherit;
@@ -62,6 +63,21 @@ pre:active {
   letter-spacing: 0.25em;
   color: var(--fg-dim);
   opacity: 0.85;
+  text-align: center;
+}
+.hint2 {
+  margin-top: 0.4em;
+  font-size: clamp(10px, 1.4vw, 13px);
+  letter-spacing: 0.25em;
+  color: var(--fg-dim);
+  opacity: 0.85;
+  text-align: center;
+}
+.helpText {
+  font-size: clamp(11px, 1.5vw, 13.5px);
+  letter-spacing: 0.14em;
+  color: var(--fg);
+  line-height: 1.8;
 }
 .scanlines {
   position: fixed;
@@ -129,7 +145,16 @@ pre:active {
   transition: opacity 0.3s ease;
   z-index: 10;
 }
-.overlay.show { opacity: 1; pointer-events: auto; }
+.overlay.show { 
+  opacity: 1; 
+  pointer-events: auto;
+}
+
+/* Force help overlay to never block when hidden */
+#helpOverlay:not(.show) {
+  pointer-events: none !important;
+  /* Element stays in DOM with opacity:0 so animations work */
+}
 .modal {
   position: absolute;
   top: 50%;
@@ -171,6 +196,105 @@ pre:active {
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 .mclose:hover { color: #ffc9c9; border-color: #b85454; }
+
+/* ---------- Maze Modal Styling ---------- */
+.mazeModal {
+  width: min(800px, 95vw);
+  max-height: 85vh;
+}
+#gameScreen {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: var(--bg0);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.mazeLeaderboard {
+  padding: 1em;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  max-height: 200px;
+  overflow-y: auto;
+}
+/* F02: big time-played readout above the maze */
+.mazeTime {
+  font-size: clamp(22px, 4vw, 34px);
+  letter-spacing: 0.18em;
+  color: var(--fg-bright);
+  text-shadow: 0 0 14px var(--glow);
+  text-align: center;
+  padding: 0.25em 0 0.1em;
+}
+/* I20: mute + close grouped in the maze modal header */
+.mbtns {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.mazeLeaderboard .leaderboard-title {
+  font-size: clamp(11px, 1.4vw, 13px);
+  letter-spacing: 0.2em;
+  color: var(--fg-bright);
+  margin-bottom: 0.5em;
+  text-align: center;
+}
+.mazeLeaderboard .leaderboard-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4em 0.6em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: clamp(10px, 1.2vw, 12px);
+  color: var(--fg);
+}
+.mazeLeaderboard .leaderboard-row:last-child {
+  border-bottom: none;
+}
+.mazeLeaderboard .leaderboard-rank {
+  color: var(--fg-dim);
+  min-width: 30px;
+}
+.mazeLeaderboard .leaderboard-score {
+  color: var(--fg-bright);
+  font-weight: bold;
+}
+
+/* ---------- Mobile Maze Controls ---------- */
+#mazeJoystick {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  z-index: 100;
+}
+#mazeJoystickStick {
+  position: absolute;
+  left: 30px;
+  top: 30px;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+}
+#mazeDirectionIndicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  z-index: 100;
+  font-size: 40px;
+  text-align: center;
+  color: var(--fg-bright);
+  pointer-events: none;
+}
+
 /* ---------- v5: per-digit dot-matrix release stepper ---------- */
 #verBar {
   display: flex;
@@ -198,10 +322,11 @@ pre:active {
   padding: 1px 2px;
   line-height: 0;
   cursor: pointer;
-  opacity: 0.55;
+  opacity: 0.85;
+  font-size: 14px;
 }
 .vchev:hover { opacity: 1; }
-.vchev:disabled { opacity: 0.12; cursor: default; }
+.vchev:disabled { opacity: 0.35; cursor: default; }
 .vchev canvas { width: 15px; display: block; image-rendering: pixelated; }
 .vdot { width: 10px; image-rendering: pixelated; }
 .tab {
@@ -211,17 +336,103 @@ pre:active {
   background: var(--panel);
   color: var(--fg-mid);
   border: 2px solid var(--border);
+  border-bottom: none;
+  border-radius: 0.25em 0.25em 0 0;
   padding: 0.45em 0.9em;
+  margin-right: 0.1em;
   cursor: pointer;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
-  transition: transform 0.08s, color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.tab:hover { color: var(--fg-bright); }
-/* press-jump replaced by the pixel ripple + hover shimmer (see .ppx/.shx) */
+.tab:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
 .tab.active {
   color: var(--deep);
   background: var(--fg);
   border-color: var(--fg-bright);
+  border-bottom-color: var(--panel);
+  margin-top: -1px;
+}
+.tabContainer {
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
+  padding: 0.1em;
+  margin: 0 1.2em;
+}
+/* the settings tab strip: standard connected tabs, one line, no wrapping */
+#setTabs {
+  flex-wrap: nowrap;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+#setTabs .tab {
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.45em 1.1em;
+  color: var(--fg-dim);
+  position: relative;
+}
+/* [ ] braces overlay the tab padding: always laid out, only shown on the
+   active tab, so tab widths never change when selection moves and the
+   overflow dropdown calculation stays stable (no flicker/resize) */
+#setTabs .tab:not(.tabDropdown)::before,
+.tabDropdownMenu .tab::before {
+  content: "[";
+  position: absolute;
+  left: 0.2em;
+  opacity: 0;
+}
+#setTabs .tab:not(.tabDropdown)::after,
+.tabDropdownMenu .tab::after {
+  content: "]";
+  position: absolute;
+  right: 0.2em;
+  opacity: 0;
+}
+#setTabs .tab:not(.tabDropdown).active::before,
+#setTabs .tab:not(.tabDropdown).active::after,
+.tabDropdownMenu .tab.active::before,
+.tabDropdownMenu .tab.active::after {
+  opacity: 1;
+}
+#setTabs .tab:hover { color: var(--fg-mid); background: var(--deep); }
+#setTabs .tab.active {
+  color: var(--fg-bright);
+  background: var(--deep);
+  border-bottom-color: var(--fg);
+  margin-top: 0;
+}
+#setTabs .tabDropdown { min-width: 40px; border-bottom: 2px solid transparent; }
+.tabContainer .optrow {
+  margin: 0;
+  padding: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.tabDropdown {
+  flex-shrink: 0;
+  min-width: 40px;
+}
+.tabDropdownMenu {
+  position: fixed;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  z-index: 100;
+  min-width: 120px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
+}
+.tabDropdownMenu .tab {
+  display: block;
+  width: 100%;
+  border-radius: 0;
+  border-bottom: 2px solid var(--border);
+  margin-right: 0;
+  position: relative;
+}
+.tabDropdownMenu .tab:last-child {
+  border-bottom: none;
 }
 /* press-jump replaced by the pixel ripple + hover shimmer (see .ppx/.shx) */
 .mbody {
@@ -293,16 +504,29 @@ body.bg-fall {
 @keyframes bgFall {
   to { background-position: -43px 387px, 61px 549px, -83px 747px, 0 0; }
 }
+/* PR1-5: while the settings window is open the full-screen background
+   effects hold still - the mini preview in Settings shows them live */
+body.set-open.bg-stars,
+body.set-open.bg-rain,
+body.set-open.bg-fall,
+body.set-open.halloween { animation-play-state: paused; }
+/* PR1-5/PR1-6: the main falling leaves hold still too - the mini preview
+   in Settings shows them live until the window closes */
+body.set-open .falling-leaf { animation-play-state: paused; }
 body.halloween {
   background-image:
-    radial-gradient(circle at 78% 14%, #f4e7c8 20px, rgba(210, 180, 255, 0.3) 30px, transparent 56px),
+    radial-gradient(circle at 80% 10%, #f4e7c8 24px, rgba(210, 180, 255, 0.3) 32px, transparent 60px),
     radial-gradient(circle, rgba(148, 90, 220, 0.7) 1px, transparent 1.6px),
     radial-gradient(circle, rgba(255, 120, 40, 0.55) 0.8px, transparent 1.3px),
     radial-gradient(ellipse at 50% 40%, var(--bg0) 0%, var(--bg1) 60%, #020303 100%);
-  background-size: 53px 53px, 97px 97px, 100% 100%;
-  animation: bgHalloween 13s linear infinite;
+  background-size: 100% 100%;
+  animation: bgHalloweenMoon 120s linear infinite;
 }
-@keyframes bgHalloween { to { background-position: 53px 477px, -97px 873px, 0 0; } }
+@keyframes bgHalloweenMoon {
+  0% { background-position: 90% 5%, 0 0, 0 0, 0 0; }
+  50% { background-position: 85% 8%, 0 0, 0 0, 0 0; }
+  100% { background-position: 90% 5%, 0 0, 0 0, 0 0; }
+}
 
 /* ---------- settings panel ---------- */
 .optrow {
@@ -311,11 +535,27 @@ body.halloween {
   gap: 0.5em;
   margin: 0.4em 0 0.8em;
 }
+/* option rows: hovering an option fades the saturation of its siblings
+   in a smooth transition — no shimmer burst (removed from settings.js) */
+.optrow .tab, .optrow .swatch {
+  transition: color 0.15s, border-color 0.15s, background 0.15s,
+    transform 0.08s, filter 0.25s ease, opacity 0.25s ease;
+}
+.optrow:hover .tab:not(:hover),
+.optrow:hover .swatch:not(:hover) {
+  filter: saturate(0.15) brightness(0.7);
+  opacity: 0.6;
+}
+.optrow:hover .tab.active:not(:hover),
+.optrow:hover .swatch.active:not(:hover) {
+  filter: saturate(0.45) brightness(0.8);
+  opacity: 0.8;
+}
 .shead {
-  margin: 0.9em 0 0.2em;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--fg-dim);
+  margin: 1.1em 0 0.25em;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: var(--fg-mid);
 }
 .srow { margin: 0.55em 0; }
 .srowtop {
@@ -326,6 +566,20 @@ body.halloween {
   margin-bottom: 0.3em;
 }
 .slabel { letter-spacing: 0.14em; color: var(--fg-mid); }
+/* ASCII-styled dropdown (leaf type picker) */
+.asciiSelect {
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  background: var(--panel);
+  color: var(--fg-mid);
+  border: 1px solid var(--border);
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+  max-width: 100%;
+}
+.asciiSelect:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
+.asciiSelect:focus { outline: 1px solid var(--fg-dim); }
 .sval { color: var(--fg-bright); }
 input[type="range"] {
   width: 100%;
@@ -382,6 +636,72 @@ input[type="range"]::-moz-range-thumb {
   border: 1px solid var(--border);
   margin: 0.2em 0 0.6em;
 }
+#setPreviewWrap {
+  position: sticky;
+  top: 0;
+  background: var(--deep);
+  z-index: 10;
+  padding: 0.4em 1.2em 0.6em;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+#setPreviewWrap canvas {
+  display: inline-block;
+  width: min(420px, 100%);
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  pointer-events: none; /* the mini preview is a passive display (v5) */
+}
+.previewCtrl.active { color: var(--fg-bright); border-color: var(--fg); background: var(--deep); }
+.previewCtrl {
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  background: var(--panel);
+  color: var(--fg-mid);
+  border: 1px solid var(--border);
+  padding: 0.2em 1.1em;
+  cursor: pointer;
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+.previewCtrl:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
+/* [ ] braces for the auto-spin toggle: CSS overlays so the button width
+   never pops when auto-spin is toggled on/off */
+.previewCtrl::before {
+  content: "[";
+  position: absolute;
+  left: 0.2em;
+  opacity: 0;
+}
+.previewCtrl::after {
+  content: "]";
+  position: absolute;
+  right: 0.2em;
+  opacity: 0;
+}
+.previewCtrl.active::before,
+.previewCtrl.active::after { opacity: 1; }
+#previewWrap {
+  position: sticky;
+  top: 0;
+  background: var(--deep);
+  z-index: 10;
+  padding: 0.4em 1.2em 0.6em;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+#previewWrap canvas {
+  display: inline-block;
+  width: min(420px, 100%);
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  pointer-events: none; /* the mini preview is a passive display (v5) */
+}
 .resizeHandle {
   position: absolute;
   right: 0;
@@ -404,6 +724,10 @@ input[type="range"]::-moz-range-thumb {
   letter-spacing: 0.2em;
   color: var(--fg-dim);
   z-index: 5;
+  display: none;
+}
+#fps.on {
+  display: block;
 }
 #cursorGlow {
   position: fixed;
@@ -413,7 +737,8 @@ input[type="range"]::-moz-range-thumb {
   height: 150px;
   pointer-events: none;
   background: radial-gradient(circle, var(--glow) 0%, transparent 62%);
-  z-index: 4;
+  /* PR1-9: cursor glow and dot must render above the z-10 overlays */
+  z-index: 20;
 }
 .cdot {
   position: fixed;
@@ -422,20 +747,26 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
   background: var(--fg-bright);
   box-shadow: 0 0 6px var(--glow);
-  z-index: 6;
+  z-index: 21;
 }
 
 /* ---------- rat builder (first visit) ---------- */
 #previewWrap {
-  padding: 0.6em 1.2em 0;
-  flex: none;
+  position: sticky;
+  top: 0;
+  background: var(--deep);
+  z-index: 10;
+  padding: 0.4em 1.2em 0.6em;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
 }
 #previewWrap canvas {
-  display: block;
+  display: inline-block;
   width: min(420px, 100%);
   image-rendering: pixelated;
   border: 1px solid var(--border);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  pointer-events: none; /* the mini preview is a passive display (v5) */
 }
 #createOverlay .modal { width: min(520px, 92vw); }
 body.setup #stage,
@@ -443,3 +774,93 @@ body.setup h1,
 body.setup #readout,
 body.setup .controls,
 body.setup .hint { visibility: hidden; }
+
+/* Mobile Modal Behavior (F07) */
+@media (max-width: 767px) {
+  .overlay.show .modal {
+    width: 95vw;
+    max-height: 90vh;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* Don't close modals on outside tap for mobile */
+  .overlay {
+    pointer-events: auto;
+  }
+  
+  .overlay.show {
+    opacity: 1;
+  }
+}
+
+/* Mobile-specific modal styling */
+.modal.mobile-full {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  top: 0;
+  left: 0;
+  transform: none;
+  border: none;
+  border-radius: 0;
+}
+
+/* PR1-19: Help overlay styling */
+.helpModal {
+  cursor: default;
+}
+.helpContent {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.helpContent p {
+  margin: 0.4em 0;
+}
+.helpContent .divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.8em 0;
+  width: 60%;
+}
+.helpContent strong {
+  color: var(--fg-bright);
+}
+
+/* SFX Test button */
+.sfxSpeakerBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-left: 0;
+  vertical-align: middle;
+  display: inline-block;
+  color: var(--fg);
+  font-family: monospace;
+  font-size: 0.9em;
+}
+.sfxSpeakerBtn:disabled {
+  text-decoration: line-through;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* PR1-16: Button color semantics */
+.tab.reset-btn {
+  color: #ff8a8a;
+  border-color: #ff6a6a;
+}
+.tab.copy-btn {
+  color: #8ab8ff;
+  border-color: #6aa8ff;
+}
+.tab.reset-btn:active, .tab.reset-btn.active {
+  background: rgba(255, 106, 106, 0.2);
+}
+.tab.copy-btn:active, .tab.copy-btn.active {
+  background: rgba(106, 168, 255, 0.2);
+}
