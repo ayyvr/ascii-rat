@@ -149,6 +149,7 @@ function applyBg() {
 let previewRot = 0;
 let previewAutoSpin = false;
 let previewSpinT = 0;
+let previewZoom = 1; // I02: wheel-zoom level for the interactive previews
 function drawRatPreview() {
   drawPreviewTo(document.getElementById("ratPreview"));
   drawPreviewTo(document.getElementById("setPreview"));
@@ -210,7 +211,7 @@ function drawPreviewTo(cv) {
   const depth = new Float32Array(W * H).fill(-1e9);
   const shade = new Float32Array(W * H);
   const theta = previewRot;
-  let scale = 1; // let: motion/entrance previews rescale this below
+  let scale = previewZoom; // let: motion/entrance previews rescale this below
   // per-tab preview behaviour: each tab previews only the aspects it controls
   const motion = setOverlay.classList.contains("show") && curTab === "ANIMATION" ? state.motion : null;
   const ent = previewEntValue(previewNow);
@@ -658,11 +659,14 @@ function renderSettings() {
     panel.append(sliderRow("DENSITY", 0.3, 2, 0.05, () => state.density,
       (v) => { state.density = v; buildRat(state.rat); drawRatPreview(); saveState(); },
       (v) => Number(v).toFixed(2) + "x"));
+    panel.append(sectionHead("AUDIO"));
+    panel.append(toggleRow("CHIP-TUNE SFX", () => state.soundEnabled !== false,
+      (v) => { state.soundEnabled = v; setSoundEnabled(v); syncMuteUI(); saveState(); }));
     panel.append(sectionHead("OVERLAYS"));
     panel.append(toggleRow("PHOSPHOR FX", () => state.fx,
       (v) => { state.fx = v; applyFx(); saveState(); }));
     panel.append(toggleRow("FPS COUNTER", () => state.fps,
-      (v) => { state.fps = v; fpsEl.classList.toggle("on", v); if (!v) fpsEl.textContent = "FPS --"; saveState(); }));
+      (v) => { state.fps = v; fpsEl.classList.toggle("on", v); if (!v) fpsEl.textContent = ""; saveState(); }));
   }
   setPanelsEl.append(panel);
   if (curTab === "RAT") drawRatPreview();
@@ -676,7 +680,14 @@ function openSettings() {
   setOverlay.classList.add("show");
   setOverlay.setAttribute("aria-hidden", "false");
   const m = setOverlay.querySelector(".modal");
-  if (!m.style.height) m.style.height = Math.round(Math.min(innerHeight * 0.8, 560)) + "px";
+  // F07: fill the screen on mobile; desktop keeps the fixed-height modal
+  if (isMobileDevice()) {
+    m.classList.add("mobile-full");
+    m.style.height = "";
+  } else {
+    m.classList.remove("mobile-full");
+    if (!m.style.height) m.style.height = Math.round(Math.min(innerHeight * 0.8, 560)) + "px";
+  }
   renderSettings();
   updateSculpt();
   setPreviewSpinUI();
@@ -820,3 +831,38 @@ document.getElementById("previewSpinBtn")?.addEventListener("click", togglePrevi
 document.getElementById("setPreviewSpinBtn")?.addEventListener("click", togglePreviewSpin);
 // sync the [ A ] buttons with the restored saved state on boot
 setPreviewSpinUI();
+
+// ---------- interactive previews (I02): drag to rotate, wheel to zoom ----------
+function attachPreviewInteractivity(cv) {
+  if (!cv) return;
+  let dragging = false, lastX = 0;
+  cv.style.cursor = "grab";
+  cv.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    cv.setPointerCapture?.(e.pointerId);
+    // manual drag takes over from auto-spin
+    if (previewAutoSpin) { previewAutoSpin = false; setPreviewSpinUI(); }
+    cv.style.cursor = "grabbing";
+    e.preventDefault();
+  });
+  cv.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    previewRot += (e.clientX - lastX) * 0.012;
+    lastX = e.clientX;
+    drawRatPreview();
+  });
+  const endDrag = () => { dragging = false; cv.style.cursor = "grab"; };
+  cv.addEventListener("pointerup", endDrag);
+  cv.addEventListener("pointercancel", endDrag);
+  cv.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    previewZoom = Math.max(0.5, Math.min(3, previewZoom * (e.deltaY < 0 ? 1.12 : 0.9)));
+    drawRatPreview();
+  }, { passive: false });
+}
+attachPreviewInteractivity(document.getElementById("ratPreview"));
+attachPreviewInteractivity(document.getElementById("setPreview"));
+
+// boot sync: FPS badge visibility follows the saved setting (I10)
+fpsEl.classList.toggle("on", state.fps);

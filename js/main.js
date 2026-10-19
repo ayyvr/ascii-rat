@@ -20,6 +20,8 @@ function initMain() {
   });
   if (!state.setupDone) {
     document.body.classList.add("setup");
+    // F07: fill the screen on mobile
+    createOverlay.querySelector(".modal")?.classList.toggle("mobile-full", isMobileDevice());
     createOverlay.classList.add("show");
     createOverlay.setAttribute("aria-hidden", "false");
     renderRatSliders(document.getElementById("createSliders"));

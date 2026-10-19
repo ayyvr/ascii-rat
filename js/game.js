@@ -331,8 +331,9 @@ function newMaze() {
   
   // Calculate optimal path
   optimalMoves = calculateOptimalPath(mazeGrid, mazeRat, mazeCheese);
-  
+
   renderMaze();
+  startMazeTimer();
 }
 
 function renderMaze() {
@@ -396,6 +397,10 @@ function mazeMove(dx, dy) {
     
     // Add to leaderboard
     addToLeaderboard(score, elapsed, mazeMoves, mazeLevel, new Date().toISOString());
+
+    // freeze the big time readout at the final value
+    stopMazeTimer(false);
+    if (mazeTimeEl) mazeTimeEl.textContent = "TIME " + Math.floor(elapsed) + "s";
     
     // Show completion message
     showNotification(`LEVEL ${mazeLevel} COMPLETE! Score: ${score}`, "success");
@@ -409,6 +414,27 @@ function mazeMove(dx, dy) {
   }
   
   renderMaze();
+}
+
+// ---------- F02: big time-played readout, live during play ----------
+let mazeTimeEl = null;
+let mazeTimerInterval = null;
+function startMazeTimer() {
+  stopMazeTimer(true);
+  mazeTimeEl = document.createElement("div");
+  mazeTimeEl.className = "mazeTime";
+  // sibling of gameScreen so renderMaze's innerHTML wipes can't touch it
+  gameScreen.parentNode.insertBefore(mazeTimeEl, gameScreen);
+  updateMazeTimer();
+  mazeTimerInterval = setInterval(updateMazeTimer, 250);
+}
+function updateMazeTimer() {
+  if (!mazeTimeEl) return;
+  mazeTimeEl.textContent = "TIME " + Math.floor((performance.now() - mazeStartTime) / 1000) + "s";
+}
+function stopMazeTimer(removeEl) {
+  if (mazeTimerInterval) { clearInterval(mazeTimerInterval); mazeTimerInterval = null; }
+  if (mazeTimeEl && removeEl) { mazeTimeEl.remove(); mazeTimeEl = null; }
 }
 
 // Mobile joystick controls
@@ -541,13 +567,16 @@ function openGame() {
   gameOn = true;
   gameOverlay.classList.add("show");
   gameOverlay.setAttribute("aria-hidden", "false");
-  
+
+  // F07: fill the screen on mobile
+  gameOverlay.querySelector(".modal")?.classList.toggle("mobile-full", isMobileDevice());
+
   // Initialize joystick for mobile
   createJoystick();
   createDirectionIndicator();
-  
+
   // Show mobile controls if on mobile
-  const isMobile = 'ontouchstart' in window || window.innerWidth < 768;
+  const isMobile = isMobileDevice();
   document.getElementById("mazeJoystick").style.display = isMobile ? "block" : "none";
   document.getElementById("mazeDirectionIndicator").style.display = isMobile ? "block" : "none";
   
@@ -558,6 +587,7 @@ function closeGame() {
   gameOn = false;
   gameOverlay.classList.remove("show");
   gameOverlay.setAttribute("aria-hidden", "true");
+  stopMazeTimer(true);
   
   // Clean up mobile controls
   const joystick = document.getElementById("mazeJoystick");

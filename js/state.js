@@ -24,6 +24,7 @@ const DEFAULTS = {
   bg: "CLASSIC",
   fps: false,
   fx: true,
+  soundEnabled: true,
   density: 1,
   halloween: false,
   leafEnabled: true,
@@ -73,6 +74,10 @@ const RAT_WORDS = {
   whiskerLen: ["tidy", "short", "neat", "standard", "long", "luxurious", "catfish"],
 };
 const isOctober = new Date().getMonth() === 9;
+// F07: shared mobile detection (touch device or narrow viewport)
+function isMobileDevice() {
+  return "ontouchstart" in window || window.innerWidth < 768;
+}
 function ratCode() {
   return RAT_DEFS.map((d) => {
     const f = (state.rat[d.k] - d.min) / (d.max - d.min);

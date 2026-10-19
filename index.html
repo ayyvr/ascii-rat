@@ -14,12 +14,13 @@
   <button id="partyBtn" class="cbtn" type="button">* PARTY MODE</button>
   <button id="logBtn" class="cbtn" type="button">[ RAT-SLOP LOG ]</button>
   <button id="setBtn" class="cbtn" type="button">+ SETTINGS</button>
+  <button id="muteBtn" class="cbtn" type="button">[ SFX ON ]</button>
 </div>
 <p class="hint">drag to spin &middot; scroll to zoom &middot; P party &middot; L log &middot; S settings &middot; W wallpaper &middot; M maze &middot; space pause</p>
 <p class="hint2">? for help</p>
 <div class="scanlines"></div>
 <div class="vignette"></div>
-<div id="fps">FPS --</div>
+<div id="fps"></div>
 <div id="cursorGlow"></div>
 <div id="cursorFx"></div>
 
@@ -74,7 +75,7 @@
   <div class="modal mazeModal" role="dialog" aria-modal="true" aria-label="Rat Maze">
     <div class="mhead">
       <div class="mtitle">R A T &nbsp; M A Z E</div>
-      <button id="gameClose" class="mclose" type="button" aria-label="Close">&times;</button>
+      <div class="mbtns"><button id="gameMuteBtn" class="tab" type="button" title="Mute chip-tune SFX">[ SFX ON ]</button><button id="gameClose" class="mclose" type="button" aria-label="Close">&times;</button></div>
     </div>
     <div id="gameScreen"></div>
     <div class="mfoot" id="gameFoot"></div>

@@ -135,6 +135,10 @@ const helpClose = document.getElementById("helpClose");
 function toggleHelp() {
   helpOverlay.classList.toggle("show");
   helpOverlay.setAttribute("aria-hidden", helpOverlay.classList.contains("show") ? "false" : "true");
+  // F07: fill the screen on mobile
+  if (helpOverlay.classList.contains("show")) {
+    helpOverlay.querySelector(".modal")?.classList.toggle("mobile-full", isMobileDevice());
+  }
 }
 function closeHelp() {
   helpOverlay.classList.remove("show");

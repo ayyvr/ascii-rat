@@ -131,6 +131,32 @@ function toggleSound() {
   return soundEnabled;
 }
 
+// Set sound enabled directly (I20: every mute control drives this one variable)
+function setSoundEnabled(v) {
+  soundEnabled = !!v;
+  return soundEnabled;
+}
+
+// Sync every mute button with the current soundEnabled state (I20)
+function syncMuteUI() {
+  const label = soundEnabled ? "[ SFX ON ]" : "[ SFX OFF ]";
+  [document.getElementById("muteBtn"), document.getElementById("gameMuteBtn")].forEach((b) => {
+    if (!b) return;
+    b.textContent = label;
+    b.classList.toggle("active", !soundEnabled);
+    b.title = soundEnabled ? "Mute chip-tune SFX" : "Unmute chip-tune SFX";
+  });
+}
+
+// User-facing mute toggle: flips the shared variable, persists, syncs all controls
+function userToggleSound() {
+  toggleSound();
+  state.soundEnabled = soundEnabled;
+  saveState();
+  syncMuteUI();
+  showNotification(soundEnabled ? "SFX ON" : "SFX OFF", "info", 1500, false);
+}
+
 // Set sound volume (0.0 to 1.0)
 function setSoundVolume(volume) {
   soundVolume = Math.max(0, Math.min(1, volume));
@@ -170,6 +196,11 @@ function initSound() {
   document.addEventListener("click", resumeAudioContext, { once: true });
   document.addEventListener("touchstart", resumeAudioContext, { once: true });
   document.addEventListener("keydown", resumeAudioContext, { once: true });
+
+  // I20: wire every mute control to the same variable
+  document.getElementById("muteBtn")?.addEventListener("click", userToggleSound);
+  document.getElementById("gameMuteBtn")?.addEventListener("click", userToggleSound);
+  syncMuteUI();
   
   // Expose to window for global access
   window.playSound = playSound;
@@ -178,6 +209,8 @@ function initSound() {
   window.playCheeseSound = playCheeseSound;
   window.playLevelUpSound = playLevelUpSound;
   window.toggleSound = toggleSound;
+  window.setSoundEnabled = setSoundEnabled;
+  window.syncMuteUI = syncMuteUI;
   window.setSoundVolume = setSoundVolume;
   window.isSoundEnabled = isSoundEnabled;
   window.getSoundVolume = getSoundVolume;
