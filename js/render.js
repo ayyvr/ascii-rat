@@ -76,7 +76,8 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyS") toggleSettings();
   else if (e.code === "KeyW") toggleZen();
   else if (e.code === "KeyM") toggleGame();
-  else if (e.code === "QuestionMark") toggleHelp();
+  // PR1-19: Fix ? keybind - use key property instead of code
+  else if (e.key === "?") toggleHelp();
   else if (e.code === "Escape") { closeLog(); closeSettings(); closeGame(); closeHelp(); }
 });
 
@@ -108,31 +109,59 @@ const helpOverlay = document.createElement("div");
 helpOverlay.id = "helpOverlay";
 helpOverlay.className = "overlay";
 helpOverlay.setAttribute("aria-hidden", "true");
+// PR1-19: Non-movable help overlay with all hints
 helpOverlay.innerHTML = `
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Help">
+  <div class="modal helpModal" role="dialog" aria-modal="true" aria-label="Help">
     <div class="mhead">
       <div class="mtitle">H E L P</div>
       <button id="helpClose" class="mclose" type="button" aria-label="Close">&times;</button>
     </div>
     <div class="mbody">
-      <p class="helpText">drag to spin &middot; scroll to zoom &middot; P party &middot; L log &middot; S settings &middot; W wallpaper &middot; M maze &middot; space pause &middot; ? help</p>
+      <div class="helpContent" id="helpContent">
+        <p><strong>CONTROLS</strong></p>
+        <p>drag &nbsp;&nbsp; spin the rat</p>
+        <p>scroll &nbsp; zoom</p>
+        <p class="divider"></p>
+        <p><strong>KEYBINDS</strong></p>
+        <p>P &nbsp;&nbsp;&nbsp;&nbsp; party mode</p>
+        <p>L &nbsp;&nbsp;&nbsp;&nbsp; Rat-Slop Log</p>
+        <p>S &nbsp;&nbsp;&nbsp;&nbsp; settings</p>
+        <p>W &nbsp;&nbsp;&nbsp;&nbsp; wallpaper (zen) mode</p>
+        <p>M &nbsp;&nbsp;&nbsp;&nbsp; maze easter egg</p>
+        <p>Space &nbsp; pause</p>
+        <p>? &nbsp;&nbsp;&nbsp;&nbsp; help</p>
+        <p>Esc &nbsp;&nbsp; close modals</p>
+      </div>
     </div>
   </div>
 `;
 document.body.appendChild(helpOverlay);
 const helpClose = document.getElementById("helpClose");
+const helpContent = document.getElementById("helpContent");
 function toggleHelp() {
   helpOverlay.classList.toggle("show");
   helpOverlay.setAttribute("aria-hidden", helpOverlay.classList.contains("show") ? "false" : "true");
-  // F07: fill the screen on mobile
+  // PR1-19: Animate in the help content
   if (helpOverlay.classList.contains("show")) {
-    helpOverlay.querySelector(".modal")?.classList.toggle("mobile-full", isMobileDevice());
+    helpContent.style.opacity = "0";
+    helpContent.style.transform = "translateY(10px)";
+    requestAnimationFrame(() => {
+      helpContent.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+      helpContent.style.opacity = "1";
+      helpContent.style.transform = "translateY(0)";
+    });
+  } else {
+    helpContent.style.opacity = "";
+    helpContent.style.transform = "";
   }
 }
 function closeHelp() {
   helpOverlay.classList.remove("show");
   helpOverlay.setAttribute("aria-hidden", "true");
+  helpContent.style.opacity = "";
+  helpContent.style.transform = "";
 }
 helpClose?.addEventListener("click", closeHelp);
+// Close help when clicking outside (on overlay)
 helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) closeHelp(); });
 

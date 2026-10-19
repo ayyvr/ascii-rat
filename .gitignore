@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Playwright
+playwright-report/
+test-results/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Test coverage
+coverage/
+
+# Playwright browsers (optional - can be large)
+# playwright-browsers/
+
+# Vibe CLI Development Files (excluded from GitHub)
+# These are for development/testing in Vibe environment only
+ROADMAP.md
+TEST-AUTOMATION-MATRIX.md
+TEST-RUN-GUIDE.md
+PR1-CHANGES.md
+
+# Test directory is kept for automated tests
+# package.json is kept for test execution

@@ -358,9 +358,9 @@ function renderMaze() {
   
   createMazeCanvas(mazeGrid[0].length, mazeGrid.length);
   
-  // Update footer
-  const elapsed = mazeSolved ? (performance.now() - mazeStartTime) / 1000 : 0;
-  const score = mazeSolved ? calculateScore(mazeMoves, optimalMoves, elapsed * 1000) : 0;
+  // Update footer - Bug#2: Show current score during gameplay, not just when solved
+  const elapsed = (performance.now() - mazeStartTime) / 1000;
+  const score = calculateScore(mazeMoves, optimalMoves, elapsed * 1000);
   
   gameFoot.textContent = 
     `LEVEL ${mazeLevel} | MOVES ${mazeMoves} | OPTIMAL ${optimalMoves} | TIME ${Math.round(elapsed)}s | SCORE ${score}`;

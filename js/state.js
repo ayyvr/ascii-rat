@@ -25,6 +25,7 @@ const DEFAULTS = {
   fps: false,
   fx: true,
   soundEnabled: true,
+  soundVolume: 0.5,
   density: 1,
   halloween: false,
   leafEnabled: true,

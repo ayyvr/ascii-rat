@@ -200,9 +200,10 @@ function createHistoryButton() {
   btn.type = "button";
   btn.title = "Notification history";
   btn.textContent = "[ N ]";
+  // PR1-17: Move to top to be with notifications
   btn.style.cssText = `
     position: fixed;
-    bottom: 14px;
+    top: 20px;
     right: 20px;
     z-index: 1001;
     font-family: inherit;
@@ -223,9 +224,10 @@ function toggleNotificationHistory() {
   if (existing) { existing.remove(); return; }
   const panel = document.createElement("div");
   panel.id = "notifHistoryPanel";
+  // PR1-17: Position at top with notifications
   panel.style.cssText = `
     position: fixed;
-    bottom: 48px;
+    top: 52px;
     right: 20px;
     z-index: 1001;
     background: var(--panel);

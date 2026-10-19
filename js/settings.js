@@ -157,7 +157,8 @@ function drawRatPreview() {
 function updatePreviewSpin(dt) {
   if (previewAutoSpin) {
     previewSpinT += dt;
-    previewRot = previewSpinT * 0.5;
+    // PR1-3: Use the configured spin speed from state
+    previewRot = previewSpinT * state.spin;
   }
 }
 
@@ -177,11 +178,11 @@ function replayPreviewEntrance() {
 function previewEntValue(now) {
   if (state.entrance === "NONE") return 1;
   if (!setOverlay.classList.contains("show")) return 1;
+  // PR1-4: Only show entrance animation on ANIMATION or STYLE tabs
   if (curTab !== "ANIMATION" && curTab !== "STYLE") return 1;
-  if (previewEntT < 0 && previewEntNext && now >= previewEntNext) previewEntT = now;
   if (previewEntT < 0) return 1;
   const ent = Math.min(1, (now - previewEntT) / 1400);
-  if (ent >= 1) { previewEntT = -1; previewEntNext = now + 2600; return 1; }
+  if (ent >= 1) { previewEntT = -1; return 1; }
   return ent;
 }
 function previewLoop(now) {
@@ -385,7 +386,8 @@ function renderRatSliders(container) {
   // Add reset rat button (skip in the create overlay, which has its own footer reset)
   if (container.id !== "createSliders") {
     const resetRow = el("div", "srow");
-    const resetBtn = el("button", "tab", "[ RESET RAT ]");
+    // PR1-16: Reset button gets red styling
+    const resetBtn = el("button", "tab reset-btn", "[ RESET RAT ]");
     resetBtn.type = "button";
     resetBtn.addEventListener("click", () => {
       state.rat = JSON.parse(JSON.stringify(DEFAULTS.rat));
@@ -407,7 +409,7 @@ function updateSculpt() {
 }
 
 // ---------- settings: category tabs + panels ----------
-const SET_TABS = ["RAT", "ANIMATION", "STYLE", "PREFERENCES", "PERFORMANCE", "SHARE"];
+const SET_TABS = ["RAT", "ANIMATION", "STYLE", "PREFERENCES", "PERFORMANCE", "SHARE", "ABOUT"];
 let curTab = "RAT";
 
 function sectionHead(text) { return el("div", "shead", text); }
@@ -494,6 +496,8 @@ function renderSetTabs() {
   });
   setTabsEl.appendChild(dropdown);
   // tabs were rebuilt: re-measure overflow for the new DOM
+  // PR1-13: Check immediately to avoid momentary display of overflowed tabs
+  checkTabOverflow();
   scheduleTabOverflowCheck();
 }
 function hiddenTabs() {
@@ -544,7 +548,8 @@ function shareRow() {
   const link = window.generateShareURL ? generateShareURL() : shareLink(code);
   const top = el("div", "srowtop");
   top.append(el("span", "slabel", "SHARE YOUR RAT"));
-  const btn = el("button", "tab", "[ COPY RAT LINK ]");
+  // PR1-16: Copy button gets blue styling
+  const btn = el("button", "tab copy-btn", "[ COPY RAT LINK ]");
   btn.type = "button";
   btn.addEventListener("click", () => {
     try {
@@ -569,18 +574,18 @@ function renderSettings() {
     const sliders = el("div");
     panel.append(sliders);
     renderRatSliders(sliders);
-    panel.append(sectionHead("SHARE YOUR RAT"));
-    panel.append(shareRow());
+    // PR1-11: Single Share button that navigates to Share tab
+    const shareBtnRow = el("div", "srow");
+    const shareBtn = el("button", "tab", "[ SHARE ]");
+    shareBtn.type = "button";
+    shareBtn.addEventListener("click", () => { curTab = "SHARE"; renderSettings(); });
+    shareBtnRow.append(shareBtn);
+    panel.append(shareBtnRow);
   } else if (curTab === "ANIMATION") {
     panel.append(sectionHead("IDLE MOTION"));
     const cm = el("div", "optrow"), dm = el("div", "palname");
     panel.append(cm, dm);
     renderMotions(cm, dm);
-    panel.append(sectionHead("ENTRANCE"));
-    const ce = el("div", "optrow"), de = el("div", "palname");
-    panel.append(ce, de);
-    renderOptions(ce, ENTRANCES, () => state.entrance,
-      (n) => { state.entrance = n; saveState(); replayPreviewEntrance(); }, de, ENTRANCE_DESC);
     panel.append(sectionHead("SPIN"));
     panel.append(sliderRow("SPIN SPEED", 0, 2, 0.05, () => state.spin,
       (v) => { state.spin = v; saveState(); }, (v) => Number(v).toFixed(2)));
@@ -589,10 +594,18 @@ function renderSettings() {
     panel.append(sliderRow("GLIDE WINDOW", 0.2, 3, 0.1, () => state.glide,
       (v) => { state.glide = v; saveState(); }, (v) => Number(v).toFixed(1) + "s"));
   } else if (curTab === "STYLE") {
-    panel.append(sectionHead("CHARACTER RAMP"));
+    // PR1-7: Rename Character Ramp to Rat Composition
+    panel.append(sectionHead("RAT COMPOSITION"));
     const cr = el("div", "optrow");
     panel.append(cr);
     renderRamps(cr);
+    panel.append(sectionHead("ENTRANCE"));
+    const ce = el("div", "optrow"), de = el("div", "palname");
+    panel.append(ce, de);
+    renderOptions(ce, ENTRANCES, () => state.entrance,
+      (n) => { state.entrance = n; saveState(); replayPreviewEntrance(); }, de, ENTRANCE_DESC);
+    // PR1-4: Trigger entrance animation when navigating to Style tab
+    replayPreviewEntrance();
     panel.append(sectionHead("PALETTE"));
     const cp = el("div", "optrow"), np = el("div", "palname");
     panel.append(cp, np);
@@ -626,12 +639,6 @@ function renderSettings() {
     renderOptions(ls, SEASONS, () => state.leafSeasonOverride || "NONE",
       (n) => { state.leafSeasonOverride = n === "NONE" ? null : n; applyLeafSettings(); saveState(); }, lsd, SEASON_DESC);
 
-    panel.append(sectionHead("ENTRANCE"));
-    const ce = el("div", "optrow"), de = el("div", "palname");
-    panel.append(ce, de);
-    renderOptions(ce, ENTRANCES, () => state.entrance,
-      (n) => { state.entrance = n; saveState(); entranceT = performance.now(); replayPreviewEntrance(); }, de, ENTRANCE_DESC);
-    
     if (isOctober) {
       panel.append(sectionHead("SEASONAL"));
       panel.append(toggleRow("HALLOWEEN MODE", () => state.halloween,
@@ -651,19 +658,85 @@ function renderSettings() {
   } else if (curTab === "SHARE") {
     panel.append(sectionHead("SHARE YOUR RAT"));
     panel.append(shareRow());
+  } else if (curTab === "ABOUT") {
+    // PR1-12: Move Diagnostics to About tab
+    panel.append(sectionHead("ABOUT ASCII RAT"));
+    panel.append(el("div", "palname", "A 3D rat rendered as pure ASCII in your browser."));
     panel.append(sectionHead("DIAGNOSTICS"));
     const diag = el("div", "srow");
     diag.append(el("span", "slabel", "Version: v" + (state.setupDone ? "6.0.0" : "5.x.x")));
     diag.append(el("span", "sval", " | LocalStorage: " + (store.get(SAVE_KEY) ? "active" : "empty")));
     panel.append(diag);
-  } else {
+  } else if (curTab === "PERFORMANCE") {
     panel.append(sectionHead("POINT DENSITY"));
     panel.append(sliderRow("DENSITY", 0.3, 2, 0.05, () => state.density,
       (v) => { state.density = v; buildRat(state.rat); drawRatPreview(); saveState(); },
       (v) => Number(v).toFixed(2) + "x"));
     panel.append(sectionHead("AUDIO"));
-    panel.append(toggleRow("CHIP-TUNE SFX", () => state.soundEnabled !== false,
-      (v) => { state.soundEnabled = v; setSoundEnabled(v); syncMuteUI(); saveState(); }));
+    // PR1-14: Chip-Tune SFX with speaker button
+    const sfxRow = el("div", "srow");
+    const sfxTop = el("div", "srowtop");
+    sfxTop.append(el("span", "slabel", "CHIP-TUNE SFX"));
+    
+    // Toggle button
+    const sfxToggle = el("button", "tab tgl");
+    sfxToggle.type = "button";
+    const syncSfxToggle = () => {
+      const enabled = state.soundEnabled !== false;
+      sfxToggle.textContent = "[ " + (enabled ? "ON" : "OFF") + " ]";
+      sfxToggle.classList.toggle("active", enabled);
+    };
+    sfxToggle.addEventListener("click", () => {
+      const v = !(state.soundEnabled !== false);
+      state.soundEnabled = v;
+      setSoundEnabled(v);
+      syncMuteUI();
+      syncSfxToggle();
+      updateSpeakerBtn();
+      saveState();
+    });
+    syncSfxToggle();
+    sfxTop.append(sfxToggle);
+    
+    // Speaker/Test button - to the left of SFX toggle, 10px spacing
+    const speakerBtn = el("button", "sfxSpeakerBtn");
+    speakerBtn.type = "button";
+    speakerBtn.textContent = "Test";
+    speakerBtn.title = "Test sound";
+    
+    // Update button state based on SFX enabled
+    const updateSpeakerBtn = () => {
+      const sfxEnabled = state.soundEnabled !== false;
+      speakerBtn.disabled = !sfxEnabled;
+      speakerBtn.style.textDecoration = sfxEnabled ? 'none' : 'line-through';
+      speakerBtn.style.opacity = sfxEnabled ? '1' : '0.5';
+      speakerBtn.style.cursor = sfxEnabled ? 'pointer' : 'not-allowed';
+    };
+    
+    speakerBtn.addEventListener("click", () => {
+      if (state.soundEnabled !== false && window.playSound) {
+        window.playSound("move", { volume: 0.3 });
+      }
+    });
+    
+    // Insert speaker 10px to the left of toggle button
+    sfxTop.insertBefore(speakerBtn, sfxToggle);
+    sfxTop.insertBefore(document.createTextNode(' '), sfxToggle);
+    sfxRow.append(sfxTop);
+    panel.append(sfxRow);
+    
+    // Initialize button state
+    updateSpeakerBtn();
+    
+    // PR1-15: SFX volume slider
+    panel.append(sliderRow("SFX VOLUME", 0, 1, 0.01, () => state.soundVolume || 0.5,
+      (v) => { 
+        state.soundVolume = v; 
+        setSoundVolume(v); 
+        saveState(); 
+      }, 
+      (v) => Math.round(v * 100) + "%"
+    ));
     panel.append(sectionHead("OVERLAYS"));
     panel.append(toggleRow("PHOSPHOR FX", () => state.fx,
       (v) => { state.fx = v; applyFx(); saveState(); }));
@@ -698,6 +771,10 @@ function closeSettings() {
   setOverlay.classList.remove("show");
   setOverlay.setAttribute("aria-hidden", "true");
   updateSculpt();
+  // PR1-4: Trigger main rat entrance animation when closing Settings
+  if (state.entrance !== "NONE") {
+    entranceT = performance.now();
+  }
 }
 function toggleSettings() {
   if (setOverlay.classList.contains("show")) closeSettings();
@@ -826,7 +903,13 @@ function setPreviewSpinUI() {
 }
 function togglePreviewSpin() {
   previewAutoSpin = !previewAutoSpin;
-  if (!previewAutoSpin) { previewRot = 0; previewSpinT = 0; }
+  if (previewAutoSpin) {
+    // PR1-1: When resuming, sync previewSpinT to match current previewRot
+    // so rotation continues smoothly from the paused position
+    previewSpinT = previewRot / state.spin;
+  }
+  // When pausing (previewAutoSpin = false), we don't touch previewSpinT or previewRot
+  // They stay at their current values, so rotation is frozen in place
   setPreviewSpinUI();
 }
 document.getElementById("previewSpinBtn")?.addEventListener("click", togglePreviewSpin);
@@ -844,7 +927,10 @@ function attachPreviewInteractivity(cv) {
     lastX = e.clientX;
     cv.setPointerCapture?.(e.pointerId);
     // manual drag takes over from auto-spin
-    if (previewAutoSpin) { previewAutoSpin = false; setPreviewSpinUI(); }
+    if (previewAutoSpin) { 
+      previewAutoSpin = false; 
+      setPreviewSpinUI();
+    }
     cv.style.cursor = "grabbing";
     e.preventDefault();
   });

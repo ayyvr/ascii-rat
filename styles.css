@@ -145,7 +145,16 @@ pre:active {
   transition: opacity 0.3s ease;
   z-index: 10;
 }
-.overlay.show { opacity: 1; pointer-events: auto; }
+.overlay.show { 
+  opacity: 1; 
+  pointer-events: auto;
+}
+
+/* Force help overlay to never block when hidden */
+#helpOverlay:not(.show) {
+  pointer-events: none !important;
+  /* Element stays in DOM with opacity:0 so animations work */
+}
 .modal {
   position: absolute;
   top: 50%;
@@ -733,11 +742,16 @@ input[type="range"]::-moz-range-thumb {
 
 /* ---------- rat builder (first visit) ---------- */
 #previewWrap {
-  padding: 0.6em 1.2em 0;
-  flex: none;
+  position: sticky;
+  top: 0;
+  background: var(--deep);
+  z-index: 10;
+  padding: 0.4em 1.2em 0.6em;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
 }
 #previewWrap canvas {
-  display: block;
+  display: inline-block;
   width: min(420px, 100%);
   image-rendering: pixelated;
   border: 1px solid var(--border);
@@ -781,4 +795,62 @@ body.setup .hint { visibility: hidden; }
   transform: none;
   border: none;
   border-radius: 0;
+}
+
+/* PR1-19: Help overlay styling */
+.helpModal {
+  cursor: default;
+}
+.helpContent {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.helpContent p {
+  margin: 0.4em 0;
+}
+.helpContent .divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.8em 0;
+  width: 60%;
+}
+.helpContent strong {
+  color: var(--fg-bright);
+}
+
+/* SFX Test button */
+.sfxSpeakerBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-left: 0;
+  vertical-align: middle;
+  display: inline-block;
+  color: var(--fg);
+  font-family: monospace;
+  font-size: 0.9em;
+}
+.sfxSpeakerBtn:disabled {
+  text-decoration: line-through;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* PR1-16: Button color semantics */
+.tab.reset-btn {
+  color: #ff8a8a;
+  border-color: #ff6a6a;
+}
+.tab.copy-btn {
+  color: #8ab8ff;
+  border-color: #6aa8ff;
+}
+.tab.reset-btn:active, .tab.reset-btn.active {
+  background: rgba(255, 106, 106, 0.2);
+}
+.tab.copy-btn:active, .tab.copy-btn.active {
+  background: rgba(106, 168, 255, 0.2);
 }
