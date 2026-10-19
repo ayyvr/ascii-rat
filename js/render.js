@@ -69,18 +69,7 @@ addEventListener("wheel", e => {
   if (!state.smoothZoom) zoom = zoomTarget;
 }, { passive: false });
 addEventListener("keydown", e => {
-  if (gameOn) {
-    const k = e.key.toLowerCase();
-    const map = {
-      arrowup: [0, -1], w: [0, -1],
-      arrowdown: [0, 1], s: [0, 1],
-      arrowleft: [-1, 0], a: [-1, 0],
-      arrowright: [1, 0], d: [1, 0],
-    };
-    if (map[k]) { e.preventDefault(); mazeMove(map[k][0], map[k][1]); }
-    else if (e.code === "Escape") closeGame();
-    return;
-  }
+  if (gameOn) return; // in-game keys (maze moves, Escape) are handled in game.js
   if (e.code === "Space") { e.preventDefault(); spinOn = !spinOn; }
   else if (e.code === "KeyP") toggleParty();
   else if (e.code === "KeyL") toggleLog();

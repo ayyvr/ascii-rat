@@ -351,9 +351,9 @@ function renderMaze() {
   const oldCanvas = document.getElementById("mazeCanvas");
   if (oldCanvas) oldCanvas.remove();
   
-  // Create new canvas
+  // Create new canvas (oldCanvas.remove() above already cleared the previous one;
+  // gameScreen also holds the mobile joystick + direction indicator — don't wipe it)
   gameCanvas.id = "mazeCanvas";
-  gameScreen.innerHTML = "";
   gameScreen.appendChild(gameCanvas);
   
   createMazeCanvas(mazeGrid[0].length, mazeGrid.length);
@@ -437,7 +437,7 @@ function startMazeTimer() {
   stopMazeTimer(true);
   mazeTimeEl = document.createElement("div");
   mazeTimeEl.className = "mazeTime";
-  // sibling of gameScreen so renderMaze's innerHTML wipes can't touch it
+  // sibling of gameScreen, in the modal flow above the maze
   gameScreen.parentNode.insertBefore(mazeTimeEl, gameScreen);
   updateMazeTimer();
   mazeTimerInterval = setInterval(updateMazeTimer, 250);
@@ -630,7 +630,7 @@ document.addEventListener("keydown", (e) => {
     d: [1, 0],
   };
   
-  const key = e.key;
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (map[key]) {
     e.preventDefault();
     const [dx, dy] = map[key];
