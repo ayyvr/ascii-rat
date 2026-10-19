@@ -203,6 +203,8 @@ function previewLoop(now) {
   const effBg = state.halloween ? "HALLOWEEN" : state.bg;
   const bgAnimating = setShown && curTab === "STYLE" &&
     (effBg === "STARFIELD" || effBg === "PIXEL RAIN" || effBg === "FALL LEAVES" || effBg === "HALLOWEEN");
+  // PR1-6: the falling-leaves preview animates on the STYLE tab too
+  const leavesAnimating = setShown && curTab === "STYLE" && state.leafEnabled && state.leafAnimation !== "NONE";
   // PR1-10: on the PREFERENCES tab the mini preview demonstrates the
   // configured zoom speed by breathing between 0.72x and 1.57x (only
   // while smooth zoom is on; any manual wheel input cancels the demo).
@@ -218,7 +220,7 @@ function previewLoop(now) {
     previewZoom += (previewZoomTarget - previewZoom) * Math.min(1, dt * 6 * state.zoomSpeed);
     zoomAnimating = true;
   }
-  if ((setShown || createShown) && (previewAutoSpin || entAnimating || motionAnimating || bgAnimating || zoomAnimating)) {
+  if ((setShown || createShown) && (previewAutoSpin || entAnimating || motionAnimating || bgAnimating || leavesAnimating || zoomAnimating)) {
     drawRatPreview();
   }
   requestAnimationFrame(previewLoop);
@@ -305,6 +307,56 @@ function drawPreviewBg(ctx, W, H, pal) {
     ctx.globalAlpha = 1;
   }
 }
+// PR1-6: cached species list for the per-frame leaf preview; reset by applyLeafSettings
+let previewLeavesCache = null;
+
+// PR1-6: miniature of the falling-leaves system - count, species colors,
+// size, speed and animation style all follow the live STYLE tab settings.
+// The main screen's leaves are paused while Settings is open (PR1-5).
+function drawPreviewLeaves(ctx, W, H) {
+  if (!state.leafEnabled) return;
+  if (typeof getActiveLeaves !== "function") return; // leaves.js not loaded yet
+  // cache the species list; applyLeafSettings invalidates it on leaf changes
+  const leaves = previewLeavesCache || (previewLeavesCache = getActiveLeaves());
+  if (!leaves.length) return;
+  const t = previewNow / 1000;
+  const anim = state.leafAnimation || "GENTLE";
+  const count = state.leafCount || 15;
+  const dur = Math.max(1, state.leafSpeed || 8); // seconds per full fall, like the CSS
+  for (let i = 0; i < count; i++) {
+    const leaf = leaves[i % leaves.length];
+    const colors = leaf.colors;
+    const color = colors[Math.floor(previewHash(i + 2) * colors.length)];
+    // main leaves run 12-28px on a full screen; scale down for the miniature
+    const size = Math.max(2, Math.round(((state.leafSize || 16) * 0.3) * (0.8 + previewHash(i + 3) * 0.5)));
+    if (anim === "NONE") {
+      ctx.globalAlpha = 0.7; // static scatter, like animation: none
+      ctx.fillStyle = color;
+      ctx.fillRect(previewHash(i) * (W - size), previewHash(i + 21) * (H - size), size, size);
+      continue;
+    }
+    const d = Math.max(1, dur * (0.8 + previewHash(i + 5) * 0.4)); // per-leaf jitter, like the DOM leaves
+    const phase = (t / d + previewHash(i + 9)) % 1;                // negative-delay equivalent: start mid-fall
+    const y = phase * (H + 2 * size) - size;
+    // sway/rotation profiles mirror the leaf keyframes: GENTLE is subtle,
+    // SWAY is wide, DRIFT is wild with big rotations
+    let amp = 0, rot = 0;
+    if (anim === "GENTLE") { amp = 0.012 * W; rot = 8 * Math.sin(phase * Math.PI * 2); }
+    else if (anim === "SWAY") { amp = 0.04 * W; rot = 15 * Math.sin(phase * Math.PI * 2); }
+    else { amp = 0.06 * W; rot = 120 * Math.sin(phase * Math.PI * 2 + previewHash(i) * 2); }
+    const x = previewHash(i) * W + amp * Math.sin(phase * Math.PI * 2 + previewHash(i + 7) * 2);
+    // fade in/out like the keyframe opacity curve (0 -> 0.7 -> 0)
+    const a = phase < 0.08 ? (phase / 0.08) * 0.7 : phase > 0.92 ? ((1 - phase) / 0.08) * 0.7 : 0.7;
+    ctx.save();
+    ctx.translate(x + size / 2, y + size / 2);
+    ctx.rotate((rot * Math.PI) / 180);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = color;
+    ctx.fillRect(-size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
 function drawPreviewTo(cv) {
   if (!cv) return;
   const ctx = cv.getContext("2d");
@@ -319,6 +371,7 @@ function drawPreviewTo(cv) {
   const gcols = Math.floor(W / cellW);
   const grows = Math.floor(H / cellH);
   drawPreviewBg(ctx, W, H, pal);
+  drawPreviewLeaves(ctx, W, H);
   const depth = new Float32Array(gcols * grows).fill(-1e9);
   const shade = new Float32Array(gcols * grows);
   const theta = previewRot;
@@ -1091,7 +1144,8 @@ function attachPreviewInteractivity(cv) {
     // smooth zoom on the new level eases in at the configured zoom speed,
     // otherwise it snaps immediately.
     zoomDemoOn = false;
-    const next = Math.max(0.5, Math.min(3, previewZoom * (e.deltaY < 0 ? 1.12 : 0.9)));
+    // compound from the target like the main renderer so fast ticks aren't damped
+    const next = Math.max(0.5, Math.min(3, previewZoomTarget * (e.deltaY < 0 ? 1.12 : 0.9)));
     if (state.smoothZoom) {
       previewZoomTarget = next;
     } else {

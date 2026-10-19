@@ -510,6 +510,9 @@ body.set-open.bg-stars,
 body.set-open.bg-rain,
 body.set-open.bg-fall,
 body.set-open.halloween { animation-play-state: paused; }
+/* PR1-5/PR1-6: the main falling leaves hold still too - the mini preview
+   in Settings shows them live until the window closes */
+body.set-open .falling-leaf { animation-play-state: paused; }
 body.halloween {
   background-image:
     radial-gradient(circle at 80% 10%, #f4e7c8 24px, rgba(210, 180, 255, 0.3) 32px, transparent 60px),

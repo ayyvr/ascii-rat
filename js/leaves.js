@@ -197,7 +197,8 @@ function createFallingLeaves() {
 
     // Random position / speed per leaf
     const left = Math.random() * 100;
-    const size = 12 + Math.random() * 16;
+    // LEAF SIZE setting drives the base size; jitter keeps it organic
+    const size = Math.max(4, (state.leafSize || 16) * (0.8 + Math.random() * 0.4));
     // fall duration scales with the ANIMATION SPEED setting, with a bit
     // of per-leaf jitter so the fall stays organic
     const duration = Math.max(3, (state.leafSpeed || 8) * (0.8 + Math.random() * 0.4));
@@ -234,6 +235,10 @@ function createFallingLeaves() {
 function applyLeafSettings() {
   generateLeafAnimationCSS();
   createFallingLeaves();
+  // PR1-6: keep the settings mini preview in sync with every leaf change
+  // (also invalidates its cached species list)
+  if (typeof previewLeavesCache !== "undefined") previewLeavesCache = null;
+  if (typeof drawRatPreview === "function") drawRatPreview();
 }
 
 // Initialize leaf system
