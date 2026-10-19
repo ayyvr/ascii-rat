@@ -43,10 +43,16 @@ const RAT_TYPES = {
 const spriteImgCache = {};
 function spriteImg(id) {
   if (!spriteImgCache[id]) {
-    const svg = getSprite(id);
+    let svg = getSprite(id);
     if (!svg) return null;
+    // give the svg root an intrinsic size so naturalWidth is reliable
+    // across browsers (viewBox-only SVGs report 0/default otherwise)
+    svg = svg.replace("<svg ", '<svg width="16" height="16" ');
     const img = new Image();
     img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    // the first render happens before the data-URI image finishes loading;
+    // redraw once it's ready so sprites replace the fallback circles
+    img.addEventListener("load", () => { if (gameOn) renderMaze(); });
     spriteImgCache[id] = img;
   }
   return spriteImgCache[id];
@@ -60,6 +66,10 @@ function drawSpriteTile(ctx, id, px, py, tileSize, fill) {
   ctx.drawImage(img, px + off, py + off, s, s);
   return true;
 }
+
+// Warm the sprite image cache at load: data-URI SVGs decode in a few ms,
+// long before the maze opens, so the first render draws real sprites
+["maze-classic-gray"].concat(Object.values(CHEESE_TYPES).map((t) => t.sprite)).forEach(spriteImg);
 
 // Leaderboard data (stored in localStorage)
 const LEADERBOARD_KEY = "asciiRat.maze.leaderboard";
@@ -362,7 +372,8 @@ function mazeMove(dx, dy) {
   const nx = mazeRat.x + dx, ny = mazeRat.y + dy;
   
   if (mazeGrid[ny][nx] === 1) {
-    // Wall collision - pixel scatter effect
+    // Wall collision - pixel scatter effect + chip-tune bonk
+    playCollisionSound();
     const r = gameCanvas.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
@@ -388,10 +399,13 @@ function mazeMove(dx, dy) {
   mazeCrumbs.add(mazeRat.x + "," + mazeRat.y);
   mazeRat = { x: nx, y: ny };
   mazeMoves++;
-  
+  playDirectionBlip(dx, dy);
+
   if (nx === mazeCheese.x && ny === mazeCheese.y) {
     // Level complete!
     mazeSolved = true;
+    playCheeseSound();
+    playLevelUpSound();
     const elapsed = (performance.now() - mazeStartTime) / 1000;
     const score = calculateScore(mazeMoves, optimalMoves, elapsed * 1000);
     

@@ -130,12 +130,18 @@ function decodeShareCode(code) {
 function applyShareCode(code) {
   const decoded = decodeShareCode(code);
   if (!decoded) return false;
-  
+
   // Apply rat parameters
   state.rat = { ...state.rat, ...decoded.rat };
   state.motion = decoded.motion;
   state.palette = decoded.palette;
-  
+
+  // Rebuild the live rat and apply motion/palette so the shared look
+  // shows immediately (this module loads after rat/render/settings)
+  buildRat(state.rat);
+  motion = decoded.motion;
+  applyPalette(PALETTES.find((p) => p.name === decoded.palette) || PALETTES[0]);
+
   saveState();
   return true;
 }

@@ -94,21 +94,27 @@ function generateLeafAnimationCSS() {
   // Define keyframes based on animation style
   // Every style is a full fall down the screen; the styles differ in
   // how much the leaf sways/rotates on its way down.
+  // Keyframe names are case-sensitive: the name in the animation
+  // shorthand below must match the @keyframes name exactly.
+  const animName = "leaf" + animation;
   let keyframes = "";
   switch (animation) {
     case "GENTLE":
       keyframes = `
-        @keyframes leafGentle {
-          0% { transform: translate(0, -14vh) rotate(0deg); opacity: 0; }
+        @keyframes ${animName} {
+          0% { transform: translate(0, -14vh) rotate(-8deg); opacity: 0; }
           8% { opacity: 0.7; }
+          25% { transform: translate(1.2vw, 18vh) rotate(6deg); }
+          50% { transform: translate(-1.2vw, 48vh) rotate(-6deg); }
+          75% { transform: translate(1.2vw, 80vh) rotate(6deg); }
           92% { opacity: 0.7; }
-          100% { transform: translate(1.5vw, 114vh) rotate(300deg); opacity: 0; }
+          100% { transform: translate(0, 114vh) rotate(-8deg); opacity: 0; }
         }
       `;
       break;
     case "SWAY":
       keyframes = `
-        @keyframes leafSway {
+        @keyframes ${animName} {
           0% { transform: translate(0, -14vh) rotate(-15deg); opacity: 0; }
           8% { opacity: 0.7; }
           25% { transform: translate(4vw, 15vh) rotate(10deg); }
@@ -121,7 +127,7 @@ function generateLeafAnimationCSS() {
       break;
     case "DRIFT":
       keyframes = `
-        @keyframes leafDrift {
+        @keyframes ${animName} {
           0% { transform: translate(3vw, -14vh) rotate(0deg); opacity: 0; }
           8% { opacity: 0.7; }
           20% { transform: translate(-6vw, 12vh) rotate(95deg); }
@@ -146,7 +152,7 @@ function generateLeafAnimationCSS() {
       opacity: 0.7;
       pointer-events: none;
       z-index: 0;
-      ${animation !== "NONE" ? `animation: leaf${animation} ${state.leafSpeed || 8}s ease-in-out infinite;` : ""}
+      ${animation !== "NONE" ? `animation: ${animName} ${state.leafSpeed || 8}s ease-in-out infinite;` : ""}
     }
     .leaf-container {
       position: fixed;

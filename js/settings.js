@@ -538,8 +538,10 @@ function shareLink(code) {
 }
 function shareRow() {
   const row = el("div", "srow");
-  const code = ratCode();
-  const link = shareLink(code);
+  // F06: short alphanumeric share code (?r=CODE); the legacy word code
+  // is only a fallback if the share module hasn't loaded
+  const code = window.encodeShareCode ? encodeShareCode() : ratCode();
+  const link = window.generateShareURL ? generateShareURL() : shareLink(code);
   const top = el("div", "srowtop");
   top.append(el("span", "slabel", "SHARE YOUR RAT"));
   const btn = el("button", "tab", "[ COPY RAT LINK ]");
