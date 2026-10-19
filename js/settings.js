@@ -445,8 +445,8 @@ function renderSetTabs() {
   setTabsEl.style.display = "flex";
   SET_TABS.forEach((name) => {
     const active = curTab === name;
-    // only the selected tab keeps its [ ] braces
-    const b = el("button", "tab" + (active ? " active" : ""), active ? "[ " + name + " ]" : name);
+    // [ ] braces are CSS overlays so tab width never changes on selection
+    const b = el("button", "tab" + (active ? " active" : ""), name);
     b.type = "button";
     b.dataset.tab = name;
     b.addEventListener("click", () => {
@@ -470,7 +470,7 @@ function renderSetTabs() {
     menu.style.cssText = "position:fixed;left:" + rect.left + "px;top:" + rect.bottom + "px;background:var(--panel);border:2px solid var(--border);z-index:100;min-width:120px;";
     SET_TABS.filter((name) => hiddenTabs().includes(name)).forEach((name) => {
       const active = curTab === name;
-      const item = el("button", "tab" + (active ? " active" : ""), active ? "[ " + name + " ]" : name);
+      const item = el("button", "tab" + (active ? " active" : ""), name);
       item.type = "button";
       item.addEventListener("click", () => {
         curTab = name;
@@ -806,7 +806,8 @@ function setPreviewSpinUI() {
   [document.getElementById("previewSpinBtn"), document.getElementById("setPreviewSpinBtn")].forEach((b) => {
     if (!b) return;
     b.classList.toggle("active", previewAutoSpin);
-    b.textContent = previewAutoSpin ? "[ A ]" : "A";
+    // [ ] braces come from CSS overlays (class-toggled), so the button
+    // never changes width when auto-spin turns on/off
     b.title = previewAutoSpin ? "Auto-spin: on" : "Auto-spin: off";
   });
 }

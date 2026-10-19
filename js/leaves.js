@@ -92,30 +92,44 @@ function generateLeafAnimationCSS() {
   style.id = "leafAnimationStyles";
   
   // Define keyframes based on animation style
+  // Every style is a full fall down the screen; the styles differ in
+  // how much the leaf sways/rotates on its way down.
   let keyframes = "";
   switch (animation) {
     case "GENTLE":
       keyframes = `
         @keyframes leafGentle {
-          0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
-          50% { transform: translateY(-2px) translateX(1px) rotate(1deg); }
+          0% { transform: translate(0, -14vh) rotate(0deg); opacity: 0; }
+          8% { opacity: 0.7; }
+          92% { opacity: 0.7; }
+          100% { transform: translate(1.5vw, 114vh) rotate(300deg); opacity: 0; }
         }
       `;
       break;
     case "SWAY":
       keyframes = `
         @keyframes leafSway {
-          0%, 100% { transform: translateY(0) translateX(0) rotate(-2deg); }
-          50% { transform: translateY(-3px) translateX(2px) rotate(2deg); }
+          0% { transform: translate(0, -14vh) rotate(-15deg); opacity: 0; }
+          8% { opacity: 0.7; }
+          25% { transform: translate(4vw, 15vh) rotate(10deg); }
+          50% { transform: translate(-4vw, 45vh) rotate(-10deg); }
+          75% { transform: translate(4vw, 78vh) rotate(10deg); }
+          92% { opacity: 0.7; }
+          100% { transform: translate(0, 114vh) rotate(-15deg); opacity: 0; }
         }
       `;
       break;
     case "DRIFT":
       keyframes = `
         @keyframes leafDrift {
-          0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
-          33% { transform: translateY(-4px) translateX(-2px) rotate(-1deg); }
-          66% { transform: translateY(-2px) translateX(3px) rotate(1deg); }
+          0% { transform: translate(3vw, -14vh) rotate(0deg); opacity: 0; }
+          8% { opacity: 0.7; }
+          20% { transform: translate(-6vw, 12vh) rotate(95deg); }
+          40% { transform: translate(7vw, 38vh) rotate(-80deg); }
+          60% { transform: translate(-5vw, 66vh) rotate(140deg); }
+          80% { transform: translate(6vw, 92vh) rotate(-60deg); }
+          92% { opacity: 0.7; }
+          100% { transform: translate(-2vw, 114vh) rotate(45deg); opacity: 0; }
         }
       `;
       break;
@@ -160,6 +174,8 @@ function createFallingLeaves() {
 
   if (!state.leafEnabled) return;
 
+  const animation = state.leafAnimation || "GENTLE";
+
   const container = document.createElement("div");
   container.id = "leafContainer";
   container.className = "leaf-container";
@@ -172,19 +188,23 @@ function createFallingLeaves() {
   for (let i = 0; i < leafCount; i++) {
     const leaf = document.createElement("div");
     leaf.className = "falling-leaf";
-    
-    // Random position
+
+    // Random position / speed per leaf
     const left = Math.random() * 100;
-    const top = Math.random() * 100;
-    const delay = Math.random() * 10;
-    const duration = 10 + Math.random() * 10;
     const size = 12 + Math.random() * 16;
-    
+    // fall duration scales with the ANIMATION SPEED setting, with a bit
+    // of per-leaf jitter so the fall stays organic
+    const duration = Math.max(3, (state.leafSpeed || 8) * (0.8 + Math.random() * 0.4));
+
     leaf.style.left = `${left}%`;
-    leaf.style.top = `${top}%`;
+    // static scatter only when leaves don't fall; otherwise the keyframes
+    // carry the leaf from above the viewport to below it (top stays 0)
+    if (animation === "NONE") leaf.style.top = `${Math.random() * 100}%`;
     leaf.style.width = `${size}px`;
     leaf.style.height = `${size}px`;
-    leaf.style.animationDelay = `${delay}s`;
+    // negative delay: every leaf starts mid-fall, so the screen is
+    // populated immediately instead of waiting through a delay
+    leaf.style.animationDelay = `${-Math.random() * duration}s`;
     leaf.style.animationDuration = `${duration}s`;
     
     // Species sprite: each species has a dot-matrix SVG; fall back to the

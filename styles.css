@@ -346,8 +346,32 @@ pre:active {
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: 0;
-  padding: 0.45em 0.75em;
+  padding: 0.45em 1.1em;
   color: var(--fg-dim);
+  position: relative;
+}
+/* [ ] braces overlay the tab padding: always laid out, only shown on the
+   active tab, so tab widths never change when selection moves and the
+   overflow dropdown calculation stays stable (no flicker/resize) */
+#setTabs .tab:not(.tabDropdown)::before,
+.tabDropdownMenu .tab::before {
+  content: "[";
+  position: absolute;
+  left: 0.2em;
+  opacity: 0;
+}
+#setTabs .tab:not(.tabDropdown)::after,
+.tabDropdownMenu .tab::after {
+  content: "]";
+  position: absolute;
+  right: 0.2em;
+  opacity: 0;
+}
+#setTabs .tab:not(.tabDropdown).active::before,
+#setTabs .tab:not(.tabDropdown).active::after,
+.tabDropdownMenu .tab.active::before,
+.tabDropdownMenu .tab.active::after {
+  opacity: 1;
 }
 #setTabs .tab:hover { color: var(--fg-mid); background: var(--deep); }
 #setTabs .tab.active {
@@ -381,6 +405,7 @@ pre:active {
   border-radius: 0;
   border-bottom: 2px solid var(--border);
   margin-right: 0;
+  position: relative;
 }
 .tabDropdownMenu .tab:last-child {
   border-bottom: none;
@@ -494,10 +519,10 @@ body.halloween {
   opacity: 0.8;
 }
 .shead {
-  margin: 0.9em 0 0.2em;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--fg-dim);
+  margin: 1.1em 0 0.25em;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: var(--fg-mid);
 }
 .srow { margin: 0.55em 0; }
 .srowtop {
@@ -603,7 +628,7 @@ input[type="range"]::-moz-range-thumb {
   background: var(--panel);
   color: var(--fg-mid);
   border: 1px solid var(--border);
-  padding: 0.2em 0.4em;
+  padding: 0.2em 1.1em;
   cursor: pointer;
   position: absolute;
   top: 0.4em;
@@ -611,6 +636,22 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 .previewCtrl:hover { color: var(--fg-bright); border-color: var(--fg-dim); }
+/* [ ] braces for the auto-spin toggle: CSS overlays so the button width
+   never pops when auto-spin is toggled on/off */
+.previewCtrl::before {
+  content: "[";
+  position: absolute;
+  left: 0.2em;
+  opacity: 0;
+}
+.previewCtrl::after {
+  content: "]";
+  position: absolute;
+  right: 0.2em;
+  opacity: 0;
+}
+.previewCtrl.active::before,
+.previewCtrl.active::after { opacity: 1; }
 #previewWrap {
   position: sticky;
   top: 0;
