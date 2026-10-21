@@ -57,6 +57,12 @@ pre {
 pre:active {
   cursor: grabbing;
 }
+/* jack-o'-lantern carved face: negative color - bright cell, dark glyph */
+pre .carve {
+  background-color: var(--fg-bright);
+  color: var(--deep);
+  text-shadow: none;
+}
 .hint {
   margin-top: 1.4em;
   font-size: clamp(10px, 1.4vw, 13px);

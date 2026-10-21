@@ -62,8 +62,9 @@ function buildRat(p) {
       return r2 > 0 ? headX + prx * Math.sqrt(r2) : headX;
     };
     // glowing face point sitting just in front of the surface
+    // (carve marks it for negative-color rendering of the eyes/nose/grin)
     const facePt = (y, z) => {
-      pts.push({ x: surfX(y, z) + 0.015, y, z, nx: 1, ny: 0, nz: 0, f: 1 });
+      pts.push({ x: surfX(y, z) + 0.015, y, z, nx: 1, ny: 0, nz: 0, f: 1, carve: true });
     };
 
     // Pumpkin body: ridged squashed sphere

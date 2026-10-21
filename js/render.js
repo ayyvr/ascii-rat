@@ -6,6 +6,7 @@ const CHAR_ASPECT = 1 / 0.6; // char cell height / width in a typical monospace 
 const pre = document.getElementById("screen");
 const grid = new Float32Array(COLS * ROWS);   // depth buffer
 const chars = new Array(COLS * ROWS).fill(" ");
+const carveMask = new Uint8Array(COLS * ROWS); // 1 = jack-o'-lantern carved-face cell
 
 const LIGHT = (() => {
   const l = [-0.45, 0.75, 0.6];

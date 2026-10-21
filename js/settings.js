@@ -374,6 +374,7 @@ function drawPreviewTo(cv) {
   drawPreviewLeaves(ctx, W, H);
   const depth = new Float32Array(gcols * grows).fill(-1e9);
   const shade = new Float32Array(gcols * grows);
+  const carve = new Uint8Array(gcols * grows); // 1 = carved-face cell (drawn negative)
   const theta = previewRot;
   let scale = previewZoom; // let: motion/entrance previews rescale this below
   // per-tab preview behaviour: each tab previews only the aspects it controls
@@ -429,6 +430,7 @@ function drawPreviewTo(cv) {
       s = 0.5 + 0.5 * (nx1 * LIGHT[0] + ny2 * LIGHT[1] + nz2 * LIGHT[2]);
     }
     shade[idx] = Math.max(0.05, Math.min(1, s));
+    carve[idx] = p.carve ? 1 : 0;
   }
   ctx.font = cellH + "px monospace";
   ctx.textBaseline = "top";
@@ -441,8 +443,15 @@ function drawPreviewTo(cv) {
       // the main renderer (MINIMAL hides shades < ~0.16, GLYPH hides none).
       const ch = shadeChar(shade[idx]);
       if (ch === " ") continue;
-      const ci = Math.min(3, Math.max(0, Math.round(shade[idx] * 3)));
-      ctx.fillStyle = palCols[ci];
+      if (carve[idx]) {
+        // carved face renders in negative color: bright cell, dark glyph
+        ctx.fillStyle = pal.bright;
+        ctx.fillRect(c2 * cellW, r2 * cellH, cellW, cellH);
+        ctx.fillStyle = pal.deep;
+      } else {
+        const ci = Math.min(3, Math.max(0, Math.round(shade[idx] * 3)));
+        ctx.fillStyle = palCols[ci];
+      }
       ctx.fillText(ch, c2 * cellW, r2 * cellH);
     }
   }

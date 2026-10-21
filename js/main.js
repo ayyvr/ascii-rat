@@ -115,6 +115,7 @@ function frame(now) {
   if (!settingsOpen) {
     // clear
     grid.fill(-1e9);
+    carveMask.fill(0);
 
     for (let i = 0; i < pts.length; i++) {
       const p = pts[i];
@@ -164,30 +165,42 @@ function frame(now) {
         if (z2 < -0.4) s *= 0.55;          // dim far side slightly (cheap depth cue)
       }
       chars[idx] = shadeChar(s);
+      carveMask[idx] = p.carve ? 1 : 0;
     }
 
-    // build frame, clearing unused cells
-    let out = "";
+    // build frame, clearing unused cells (outHtml escapes and wraps carved-face
+    // cells in negative-color spans; out stays plain for the fast textContent path)
+    const escCh = (ch) => ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : ch;
+    let out = "", outHtml = "", anyCarve = false;
     for (let r = 0; r < ROWS; r++) {
       const start = r * COLS;
       for (let c = 0; c < COLS; c++) {
         const idx = start + c;
         if (grid[idx] === -1e9) chars[idx] = " ";
-        out += chars[idx];
+        const ch = chars[idx];
+        out += ch;
+        if (carveMask[idx]) {
+          anyCarve = true;
+          outHtml += '<span class="carve">' + escCh(ch) + "</span>";
+        } else {
+          outHtml += escCh(ch);
+        }
       }
-      if (r < ROWS - 1) out += "\n";
+      if (r < ROWS - 1) { out += "\n"; outHtml += "\n"; }
     }
 
     if (party) {
-      // rainbow waves: each line rides its own hue
-      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-      pre.innerHTML = out
+      // rainbow waves: each line rides its own hue (carved-face cells keep
+      // their negative colors via the nested .carve span)
+      pre.innerHTML = outHtml
         .split("\n")
         .map((ln, r) => {
           const h = (partyHue + r * 13) % 360;
-          return '<span style="color:hsl(' + h + ', 95%, 68%)">' + esc(ln) + "</span>";
+          return '<span style="color:hsl(' + h + ', 95%, 68%)">' + ln + "</span>";
         })
         .join("\n");
+    } else if (anyCarve) {
+      pre.innerHTML = outHtml;
     } else {
       pre.textContent = out;
     }
