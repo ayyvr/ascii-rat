@@ -47,6 +47,91 @@ function buildRat(p) {
   ellipsoid(0, 0, 0, bodyRx, bodyRy, bodyRz, n(2600));
   ellipsoid(-1.0 * len, 0.05, 0, 1.15 * len, 0.8 * chunk, 0.72 * chunk, n(1100));
 
+  // Halloween mode: the head becomes a jack-o'-lantern pumpkin
+  const pumpkinHead = state.halloween && isOctober;
+
+  if (pumpkinHead) {
+    // ---------- pumpkin head: ridged squashed sphere + stem + carved face ----------
+    const prx = 0.68 * hs, pry = 0.55 * hs, prz = 0.72 * hs;
+    const lobes = 5, ridgeAmp = 0.13;
+
+    // surface X at a given (y, z) on the pumpkin (ellipsoid approx, no ridge)
+    const surfX = (y, z) => {
+      const ny = (y - headY) / pry, nz = z / prz;
+      const r2 = 1 - ny * ny - nz * nz;
+      return r2 > 0 ? headX + prx * Math.sqrt(r2) : headX;
+    };
+    // glowing face point sitting just in front of the surface
+    const facePt = (y, z) => {
+      pts.push({ x: surfX(y, z) + 0.015, y, z, nx: 1, ny: 0, nz: 0, f: 1 });
+    };
+
+    // Pumpkin body: ridged squashed sphere
+    for (let i = 0; i < n(1500); i++) {
+      const u = Math.random() * 2 * Math.PI;
+      const v = Math.acos(rand(-1, 1));
+      const ridge = 1 + ridgeAmp * Math.cos(lobes * u);
+      const dx = Math.sin(v) * Math.cos(u);
+      const dy = Math.cos(v);
+      const dz = Math.sin(v) * Math.sin(u);
+      let nx = dx / (prx * ridge), ny = dy / pry, nz = dz / (prz * ridge);
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      pts.push({
+        x: headX + dx * prx * ridge,
+        y: headY + dy * pry,
+        z: dz * prz * ridge,
+        nx: nx / nl, ny: ny / nl, nz: nz / nl,
+      });
+    }
+
+    // Stem: small tapered cylinder on top, slight forward tilt
+    const stemH = 0.22 * hs, stemR = 0.08 * hs;
+    for (let i = 0; i < n(60); i++) {
+      const u = Math.random() * 2 * Math.PI;
+      const t = Math.random();
+      const r = stemR * (1 - 0.4 * t);
+      const dx = Math.cos(u) * r, dz = Math.sin(u) * r;
+      const nl = Math.hypot(dx, dz) || 1;
+      pts.push({
+        x: headX + 0.05 * hs + dx,
+        y: headY + pry + stemH * t,
+        z: dz,
+        nx: dx / nl, ny: 0.3, nz: dz / nl,
+      });
+    }
+
+    // Carved face: glowing triangle eyes
+    for (const side of [-1, 1]) {
+      const ez = side * 0.28 * hs, ey = headY + 0.12 * hs;
+      const ew = 0.2 * hs, eh = 0.16 * hs;
+      for (let i = 0; i < n(30); i++) {
+        const t = Math.random();
+        const halfW = (ew / 2) * (1 - t * 0.7);
+        facePt(ey - eh / 2 + t * eh, ez + rand(-halfW, halfW));
+      }
+    }
+
+    // Carved face: glowing triangle nose (pointing down)
+    {
+      const ny2 = headY - 0.06 * hs, nw = 0.14 * hs, nh = 0.12 * hs;
+      for (let i = 0; i < n(20); i++) {
+        const t = Math.random();
+        const halfW = (nw / 2) * (1 - t * 0.7);
+        facePt(ny2 + nh / 2 - t * nh, rand(-halfW, halfW));
+      }
+    }
+
+    // Carved face: jagged grin mouth
+    {
+      const my = headY - 0.22 * hs, mw = 0.34 * hs, mh = 0.08 * hs;
+      for (let i = 0; i < n(50); i++) {
+        const t = Math.random();
+        const mz = (t - 0.5) * mw;
+        const zig = Math.abs(Math.sin(t * Math.PI * 3)) * mh;
+        facePt(my + rand(-mh / 2, zig), mz);
+      }
+    }
+  } else {
   // Head + cheeks
   ellipsoid(headX, headY, 0, 0.72 * hs, 0.6 * hs, 0.6 * hs, n(1300));
   ellipsoid(headX + 0.25 * hs, 0.1, 0, 0.45 * hs, 0.4 * hs, 0.42 * hs, n(350));
@@ -85,6 +170,7 @@ function buildRat(p) {
     ellipsoid(headX + 0.38 * hs, headY + 0.14 * hs, side * 0.38 * hs,
       0.1 * p.eyeSize, 0.11 * p.eyeSize, 0.1 * p.eyeSize, n(24), { force: 0.95 });
   }
+  } // end non-pumpkin head
 
   // Legs (tagged FL/FR/BL/BR so WALK can animate the gait)
   const legRy = 0.55 * p.legLen;
@@ -117,20 +203,22 @@ function buildRat(p) {
     }
   })();
 
-  // Whiskers
-  const whiskX = headX + 0.25 * hs + 0.8 * p.snoutLen * hs - 0.15;
-  for (const side of [-1, 1]) {
-    for (let w = 0; w < 3; w++) {
-      const spread = (0.22 + w * 0.2) * p.whiskerLen;
-      const droop = 0.05 - w * 0.08;
-      for (let k = 0; k <= 14; k++) {
-        const t = k / 14;
-        pts.push({
-          x: whiskX + 1.1 * p.whiskerLen * t,
-          y: 0.12 + droop * t,
-          z: side * (0.15 + spread * t),
-          nx: 0, ny: 1, nz: side * 0.6,
-        });
+  // Whiskers (skipped for pumpkin head)
+  if (!pumpkinHead) {
+    const whiskX = headX + 0.25 * hs + 0.8 * p.snoutLen * hs - 0.15;
+    for (const side of [-1, 1]) {
+      for (let w = 0; w < 3; w++) {
+        const spread = (0.22 + w * 0.2) * p.whiskerLen;
+        const droop = 0.05 - w * 0.08;
+        for (let k = 0; k <= 14; k++) {
+          const t = k / 14;
+          pts.push({
+            x: whiskX + 1.1 * p.whiskerLen * t,
+            y: 0.12 + droop * t,
+            z: side * (0.15 + spread * t),
+            nx: 0, ny: 1, nz: side * 0.6,
+          });
+        }
       }
     }
   }

@@ -67,9 +67,14 @@ function drawSpriteTile(ctx, id, px, py, tileSize, fill) {
   return true;
 }
 
+// Halloween mode: pumpkin-headed rat (same gate as applyHalloween)
+function isHalloweenActive() {
+  return state.halloween && isOctober;
+}
+
 // Warm the sprite image cache at load: data-URI SVGs decode in a few ms,
 // long before the maze opens, so the first render draws real sprites
-["maze-classic-gray"].concat(Object.values(CHEESE_TYPES).map((t) => t.sprite)).forEach(spriteImg);
+["maze-classic-gray", "maze-pumpkin-rat"].concat(Object.values(CHEESE_TYPES).map((t) => t.sprite)).forEach(spriteImg);
 
 // Leaderboard data (stored in localStorage)
 const LEADERBOARD_KEY = "asciiRat.maze.leaderboard";
@@ -234,9 +239,52 @@ function createMazeCanvas(w, h) {
         ctx.fill();
       }
       
-      // Draw rat (sprite; falls back to the classic circle while loading)
+      // Draw rat (sprite; falls back to a circle while loading)
       if (mazeRat && mazeRat.x === x && mazeRat.y === y) {
-        if (!drawSpriteTile(ctx, "maze-classic-gray", x * tileSize, y * tileSize, tileSize, 0.9)) {
+        const halloween = isHalloweenActive();
+        const ratSprite = halloween ? "maze-pumpkin-rat" : "maze-classic-gray";
+        if (!drawSpriteTile(ctx, ratSprite, x * tileSize, y * tileSize, tileSize, 0.9)) {
+        if (halloween) {
+          // Pumpkin fallback: orange squashed circle + stem + carved face
+          const cx = x * tileSize + tileSize / 2;
+          const cy = y * tileSize + tileSize / 2;
+          const pr = tileSize / 3.2;
+          // pumpkin body
+          ctx.fillStyle = "#FF8C1A";
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, pr * 1.1, pr, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // stem
+          ctx.fillStyle = "#6B4A2E";
+          ctx.fillRect(cx - tileSize / 24, cy - pr - tileSize / 10, tileSize / 12, tileSize / 8);
+          // carved face (glowing)
+          ctx.fillStyle = "#FFE066";
+          // triangle eyes
+          ctx.beginPath();
+          ctx.moveTo(cx - tileSize / 8, cy - tileSize / 24);
+          ctx.lineTo(cx - tileSize / 5, cy + tileSize / 16);
+          ctx.lineTo(cx - tileSize / 16, cy + tileSize / 16);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(cx + tileSize / 8, cy - tileSize / 24);
+          ctx.lineTo(cx + tileSize / 16, cy + tileSize / 16);
+          ctx.lineTo(cx + tileSize / 5, cy + tileSize / 16);
+          ctx.closePath();
+          ctx.fill();
+          // jagged mouth
+          ctx.beginPath();
+          ctx.moveTo(cx - pr * 0.7, cy + pr * 0.4);
+          ctx.lineTo(cx - pr * 0.35, cy + pr * 0.7);
+          ctx.lineTo(cx, cy + pr * 0.45);
+          ctx.lineTo(cx + pr * 0.35, cy + pr * 0.7);
+          ctx.lineTo(cx + pr * 0.7, cy + pr * 0.4);
+          ctx.lineTo(cx + pr * 0.35, cy + pr * 0.55);
+          ctx.lineTo(cx, cy + pr * 0.75);
+          ctx.lineTo(cx - pr * 0.35, cy + pr * 0.55);
+          ctx.closePath();
+          ctx.fill();
+        } else {
         ctx.fillStyle = "#FFC53D";
         ctx.beginPath();
         ctx.arc(
@@ -269,6 +317,7 @@ function createMazeCanvas(w, h) {
           Math.PI * 2
         );
         ctx.fill();
+        }
         }
       }
       

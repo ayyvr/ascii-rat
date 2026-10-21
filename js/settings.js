@@ -726,9 +726,9 @@ function shareRow() {
   const code = window.encodeShareCode ? encodeShareCode() : ratCode();
   const link = window.generateShareURL ? generateShareURL() : shareLink(code);
   const top = el("div", "srowtop");
-  top.append(el("span", "slabel", "SHARE YOUR RAT"));
+  top.append(el("span", "slabel", "SHARE YOUR SETUP"));
   // PR1-16: Copy button gets blue styling
-  const btn = el("button", "tab copy-btn", "[ COPY RAT LINK ]");
+  const btn = el("button", "tab copy-btn", "[ COPY LINK ]");
   btn.type = "button";
   btn.addEventListener("click", () => {
     try {
@@ -737,10 +737,12 @@ function shareRow() {
     } catch (e) {
       btn.textContent = "[ " + code + " ]";
     }
-    setTimeout(() => { btn.textContent = "[ COPY RAT LINK ]"; }, 1400);
+    setTimeout(() => { btn.textContent = "[ COPY LINK ]"; }, 1400);
   });
   top.append(btn);
   row.append(top, el("div", "palname", code));
+  // v2 share codes carry the full setup: rat body, animations, style, preferences
+  row.append(el("div", "palname", "includes rat body, animations, style & preferences"));
   return row;
 }
 function renderSettings() {
@@ -762,7 +764,7 @@ function renderSettings() {
     renderRatSliders(sliders);
     // PR1-11: Single Share button that navigates to Share tab
     const shareBtnRow = el("div", "srow");
-    const shareBtn = el("button", "tab", "[ SHARE ]");
+    const shareBtn = el("button", "tab", "[ SHARE SETUP ]");
     shareBtn.type = "button";
     shareBtn.addEventListener("click", () => { curTab = "SHARE"; renderSettings(); });
     shareBtnRow.append(shareBtn);
@@ -828,7 +830,7 @@ function renderSettings() {
     if (isOctober) {
       panel.append(sectionHead("SEASONAL"));
       panel.append(toggleRow("HALLOWEEN MODE", () => state.halloween,
-        (v) => { state.halloween = v; applyHalloween(); saveState(); renderSettings(); }));
+        (v) => { state.halloween = v; applyHalloween(); buildRat(state.rat); drawRatPreview(); saveState(); renderSettings(); }));
     }
   } else if (curTab === "PREFERENCES") {
     // PR1-10: the zoom-speed demo runs only while PREFERENCES is the
@@ -846,7 +848,7 @@ function renderSettings() {
     panel.append(sliderRow("ZOOM SPEED", 0.25, 3, 0.05, () => state.zoomSpeed,
       (v) => { state.zoomSpeed = v; saveState(); }, (v) => Number(v).toFixed(2) + "x"));
   } else if (curTab === "SHARE") {
-    panel.append(sectionHead("SHARE YOUR RAT"));
+    panel.append(sectionHead("SHARE YOUR SETUP"));
     panel.append(shareRow());
   } else if (curTab === "ABOUT") {
     // PR1-12: Move Diagnostics to About tab
