@@ -122,14 +122,17 @@ function buildRat(p) {
       }
     }
 
-    // Carved face: jagged grin mouth
+    // Carved face: jagged grin mouth - wide and deep, corners curving up
+    // past the nose, jagged top edge like teeth
     {
-      const my = headY - 0.22 * hs, mw = 0.34 * hs, mh = 0.08 * hs;
-      for (let i = 0; i < n(50); i++) {
+      const my = headY - 0.27 * hs, mw = 0.46 * hs, mh = 0.12 * hs;
+      for (let i = 0; i < n(75); i++) {
         const t = Math.random();
         const mz = (t - 0.5) * mw;
-        const zig = Math.abs(Math.sin(t * Math.PI * 3)) * mh;
-        facePt(my + rand(-mh / 2, zig), mz);
+        const u = 2 * (t - 0.5);                          // -1 .. 1 across the mouth
+        const grin = 0.6 * mh * u * u;                    // smile arc: corners rise
+        const zig = Math.abs(Math.sin(t * Math.PI * 3)) * 0.5 * mh;
+        facePt(my + grin + rand(-mh / 2, mh / 2) + zig, mz);
       }
     }
   } else {
