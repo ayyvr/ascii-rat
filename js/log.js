@@ -157,6 +157,17 @@ const CHANGELOG = [
       { s: "major", text: "HARDENING: single-owner in-game keys (one move per keypress, case-insensitive WASD), joystick and direction indicator survive maze re-renders, settings-open render skips, boot state sync, file://-safe share links, AudioContext autostart fix, leaf constant dedupe, dead preview state dropped" },
     ],
   },
+  {
+    tag: "v6.1.0",
+    name: "SPOOKY SQUEAK",
+    entries: [
+      { s: "major", text: "HALLOWEEN PUMPKIN HEAD: when Halloween mode is on, the rat's head becomes a jack-o'-lantern - ridged pumpkin, stem, and a glowing carved face with triangle eyes and a jagged grin - everywhere the rat appears: the 3D stage, settings and builder previews, and the maze game" },
+      { s: "major", text: "FULL-SETUP SHARE CODES: share links now carry your entire setup - rat body, animations (motion, spin, glide, momentum, entrance), style (ramp, palette, background, density, falling leaves, halloween), preferences (cursor, zoom, smooth zoom), performance (fps, fx, sound), and party mode - 31 characters instead of 13" },
+      { s: "medium", text: "Maze game gets a pumpkin-headed rat: new 16x16 pixel sprite with carved face, plus a canvas-drawn pumpkin fallback while the sprite loads" },
+      { s: "medium", text: "Share code rat encoding fixed: body sliders now use their correct ranges instead of a one-size-fits-all window, so shared rats arrive looking exactly as sculpted" },
+      { s: "minor", text: "SHARE tab renamed to SHARE YOUR SETUP with a note listing what the link carries" },
+    ],
+  },
 ];
 
 const SEV = {

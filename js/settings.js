@@ -856,7 +856,7 @@ function renderSettings() {
     panel.append(el("div", "palname", "A 3D rat rendered as pure ASCII in your browser."));
     panel.append(sectionHead("DIAGNOSTICS"));
     const diag = el("div", "srow");
-    diag.append(el("span", "slabel", "Version: v" + (state.setupDone ? "6.0.0" : "5.x.x")));
+    diag.append(el("span", "slabel", "Version: v" + (state.setupDone ? "6.1.0" : "5.x.x")));
     diag.append(el("span", "sval", " | LocalStorage: " + (store.get(SAVE_KEY) ? "active" : "empty")));
     panel.append(diag);
   } else if (curTab === "PERFORMANCE") {

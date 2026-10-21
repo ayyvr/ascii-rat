@@ -14,7 +14,7 @@ Clone (or download) and open `index.html` — that's it. Classic script tags, so
 - Rat-Slop Log: the in-app changelog, with a dot-matrix release stepper for browsing versions.
 - Rat maze easter egg: click the title (or press `M`) and navigate a rodent through a puzzle.
 - Halloween mode lurks in Settings during October only.
-- Share your rat: the RAT tab in Settings mints a `?rat=` link of rat-phrases (`noodle-chonk-radar-catfish-...`) that carries ONLY the rat — every other setting stays unique to whoever opens it.
+- Share your setup: the SHARE tab in Settings mints a `?r=` link that carries your entire rat — body, animations, style, preferences, and more.
 
 ## Controls
 
@@ -47,4 +47,4 @@ Parted out for human reviewability — seven plain scripts loaded in order by `i
 
 ## Version
 
-v5.0.0 — SEWER SHARE. Full history lives in the Rat-Slop Log (press `L`).
+v6.1.0 — SPOOKY SQUEAK. Full history lives in the Rat-Slop Log (press `L`).

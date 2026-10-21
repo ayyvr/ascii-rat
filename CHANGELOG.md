@@ -2,6 +2,14 @@
 
 Full release history, mirrored from the in-app Rat-Slop Log (press `L`). Severity: `>>` major, `>` medium, `~` minor.
 
+## v6.1.0 — SPOOKY SQUEAK
+
+- >> HALLOWEEN PUMPKIN HEAD: when Halloween mode is on, the rat's head becomes a jack-o'-lantern - ridged pumpkin, stem, and a glowing carved face with triangle eyes and a jagged grin - everywhere the rat appears: the 3D stage, settings and builder previews, and the maze game
+- >> FULL-SETUP SHARE CODES: share links now carry your entire setup - rat body, animations (motion, spin, glide, momentum, entrance), style (ramp, palette, background, density, falling leaves, halloween), preferences (cursor, zoom, smooth zoom), performance (fps, fx, sound), and party mode - 31 characters instead of 13
+- > Maze game gets a pumpkin-headed rat: new 16x16 pixel sprite with carved face, plus a canvas-drawn pumpkin fallback while the sprite loads
+- > Share code rat encoding fixed: body sliders now use their correct ranges instead of a one-size-fits-all window, so shared rats arrive looking exactly as sculpted
+- ~ SHARE tab renamed to SHARE YOUR SETUP with a note listing what the link carries
+
 ## v6.0.0 — PIXEL PLUNDER
 
 - >> RAT MAZE overhauled: pixel-art 32x32 tiles with sprite-rendered rat and cheese (color blobs retired), mobile joystick, scoring, cheese types and a leaderboard - mazes grow with every cheese
